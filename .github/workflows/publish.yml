@@ -1,0 +1,45 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  test-and-publish:
+    name: Build, Test and Publish to PyPI
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Required for PyPI OIDC Trusted Publishing
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+
+      - name: Run Detector Unit Tests
+        run: |
+          python -m unittest discover tests
+
+      - name: Build Source and Wheel Distributions
+        run: |
+          python -m build
+
+      - name: Publish Package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # Optional: If using PyPI API Token secret instead of OIDC Trusted Publishing
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true
