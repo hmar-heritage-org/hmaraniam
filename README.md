@@ -11,11 +11,11 @@
 ## Key Features
 
 - **Microsecond Speed:** $O(1)$ dictionary lookups with no heavy ML dependencies (PyTorch/TensorFlow free).
+- **Dual-Lens Diacritic Engine:** Reports both `casual_hmar_ratio` (ASCII-normalized for standard QWERTY typing) and `formal_hmar_ratio` (exact diacritic matching for formal literary text).
+- **Mathematical Confidence Score:** Returns an empirical, quantitative `confidence_score` between `0.0000` and `1.0000` (incorporating Bayesian document length weighting).
+- **Standardized Schema:** Guarantees an immutable JSON output structure across all calls, including `non_hmar_words_count` and `diacritic_words_count`.
+- **Extensible & Customizable:** Allows developers to supply `custom_unigrams`, `extra_unigrams`, `custom_stopwords`, or disable default stopwords.
 - **Dual Offline/CDN Architecture:** Automatically syncs with the live `hmar-heritage-org/hmaraniam` unigram dataset via jsDelivr CDN, with automatic local disk caching and bundled fallback.
-- **Linguistically Aware:** Anchored on a curated 30,600+ surface word Hmar unigram vocabulary and core Hmar grammar particles (`ruokchu`, `popah`, `haiin`, `naw`, `chun`, `tlat`).
-- **Granular Classification:** Provides 3-way language labeling (`hmar`, `english`, `other`), confidence ratings (`definitely`, `likely`, `uncertain`), and match ratios.
-- **HTML & URL Aware:** Built-in `detect_html()` strips scripts, styles, and tags, while automatically filtering URLs/emails before tokenization.
-- **Flexible Detection Modes:** Supports `mode="basic"` (active default core ~30k vocabulary) and `mode="high"` (auto-discovers all extended dataset shards, falling back seamlessly to basic).
 
 ---
 
@@ -27,6 +27,29 @@ pip install hmaraniam
 
 ---
 
+## Standard Output Schema
+
+```json
+{
+  "language": "hmar",
+  "confidence_score": 0.9452,
+  "orthography": "casual_qwerty",
+  "mode": "basic",
+  "scores": {
+    "casual_hmar_ratio": 0.9524,
+    "formal_hmar_ratio": 0.8095,
+    "english_stopword_ratio": 0.0000,
+    "total_words": 21,
+    "hmar_words_count": 20,
+    "non_hmar_words_count": 1,
+    "english_stopwords_count": 0,
+    "diacritic_words_count": 1
+  }
+}
+```
+
+---
+
 ## Usage
 
 ### Quick Start
@@ -34,72 +57,28 @@ pip install hmaraniam
 ```python
 import hmaraniam
 
-# Authentic text from L. Keivom collection
+# Authentic text from L. Keivom archive
 sample_text = "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu lien lema intel le insung khawm a nih."
 
 result = hmaraniam.detect(sample_text)
 
 print(result)
-# Output:
-# {
-#     "language": "hmar",
-#     "confidence": "definitely",
-#     "mode": "basic",
-#     "scores": {
-#         "hmar_ratio": 0.8421,
-#         "english_stopword_ratio": 0.0,
-#         "total_words": 19,
-#         "hmar_matches": 16,
-#         "english_stop_matches": 0
-#     }
-# }
 ```
 
-### HTML & Web Post Detection
-
-Pass raw HTML strings directly — `hmaraniam` automatically strips scripts, styles, comments, and HTML tags:
-
-```python
-import hmaraniam
-
-raw_html = """
-<html>
-    <body>
-        <h1>Tuking Chanchinbu</h1>
-        <p>Tuking chanchinbu a hung suok tlangval a nih. https://virthli.in/article/123</p>
-    </body>
-</html>
-"""
-
-result = hmaraniam.detect_html(raw_html)
-print(result["language"]) # 'hmar'
-```
-
-### File Detection
-
-```python
-import hmaraniam
-
-# Automatically detects HTML vs plain text files based on extension
-result = hmaraniam.detect_file("article.html")
-```
-
-### Paragraph-Level Classification
-
-For multi-paragraph articles or code-switched documents:
+### Custom Unigrams & Stopwords
 
 ```python
 from hmaraniam import Detector
 
-detector = Detector()
-paragraphs = detector.detect_paragraphs("""
-Tuking chanchinbu a hung suok tlangval a nih.
+# Provide custom unigrams or extra domain vocabulary
+detector = Detector(
+    mode="basic",
+    extra_unigrams=["customworda", "customwordb"],
+    custom_stopwords=["and", "the", "with"],
+    disable_default_stopwords=False
+)
 
-The official statement was released by the committee.
-""")
-
-for p in paragraphs:
-    print(f"[{p['language'].upper()}] {p['text_snippet']}")
+result = detector.detect("Khawvel fe dan phung...")
 ```
 
 ### Modes & Advanced Options
@@ -130,19 +109,13 @@ import hmaraniam
 try:
     hmaraniam.detect("Text", mode="ultra")
 except ValueError as e:
-    print(e) # "Invalid detection mode 'ultra'. Supported modes are 'basic' (default) and 'high'."
+    print(e)
 
 # Raises TypeError for non-string input
 try:
     hmaraniam.detect(12345)
 except TypeError as e:
-    print(e) # "Expected text input to be a string, got int"
-
-# Raises FileNotFoundError for missing files
-try:
-    hmaraniam.detect_file("non_existent.html")
-except FileNotFoundError as e:
-    print(e) # "Target file does not exist or is not a valid file: 'non_existent.html'"
+    print(e)
 ```
 
 ---

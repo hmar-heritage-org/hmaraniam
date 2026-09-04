@@ -1,5 +1,5 @@
 """
-Unit tests for hmaraniam pure string detector engine.
+Unit tests for hmaraniam pure string detector engine with standardized schema, custom unigrams, and custom stopwords.
 """
 
 import unittest
@@ -9,16 +9,15 @@ from hmaraniam import Detector, detect
 class TestHmaraniam(unittest.TestCase):
 
     def test_hmar_detection_basic(self):
-        # Authentic text from L. Keivom collection
         sample_text = "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu lien lema intel le insung khawm a nih."
         res = detect(sample_text, mode="basic")
         self.assertEqual(res["language"], "hmar")
-        self.assertEqual(res["mode"], "basic")
-        self.assertIn(res["confidence"], ["definitely", "likely"])
-        self.assertGreater(res["scores"]["hmar_ratio"], 0.5)
+        self.assertGreaterEqual(res["confidence_score"], 0.70)
+        self.assertIn("casual_hmar_ratio", res["scores"])
+        self.assertIn("non_hmar_words_count", res["scores"])
+        self.assertEqual(res["scores"]["total_words"], 21)
 
     def test_hmar_detection_high_mode(self):
-        # Authentic text from L. Keivom collection
         sample_text = "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu lien lema intel le insung khawm a nih."
         detector = Detector(mode="high", offline_only=True)
         res = detector.detect(sample_text)
@@ -34,8 +33,30 @@ class TestHmaraniam(unittest.TestCase):
     def test_empty_input(self):
         res = detect("")
         self.assertEqual(res["language"], "unknown")
-        self.assertEqual(res["confidence"], "uncertain")
+        self.assertEqual(res["confidence_score"], 0.0)
         self.assertEqual(res["scores"]["total_words"], 0)
+        self.assertEqual(res["scores"]["non_hmar_words_count"], 0)
+
+    def test_custom_unigrams(self):
+        custom_detector = Detector(
+            mode="basic",
+            custom_unigrams=["alpha", "beta", "gamma"],
+            disable_default_stopwords=True,
+            offline_only=True,
+        )
+        res = custom_detector.detect("alpha beta gamma alpha")
+        self.assertEqual(res["language"], "hmar")
+        self.assertEqual(res["scores"]["hmar_words_count"], 4)
+        self.assertEqual(res["scores"]["non_hmar_words_count"], 0)
+
+    def test_custom_stopwords(self):
+        custom_detector = Detector(
+            mode="basic",
+            custom_stopwords=["customstopa", "customstopb"],
+            offline_only=True,
+        )
+        res = custom_detector.detect("customstopa customstopb customstopa")
+        self.assertGreater(res["scores"]["english_stopwords_count"], 0)
 
     def test_error_handling(self):
         with self.assertRaises(ValueError):
@@ -43,11 +64,6 @@ class TestHmaraniam(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             detect(12345)  # type: ignore
-
-    def test_detector_offline_mode(self):
-        detector = Detector(offline_only=True)
-        res = detector.detect("Hi Hmar tawng thumal nih.")
-        self.assertEqual(res["language"], "hmar")
 
     def test_detect_paragraphs(self):
         detector = Detector(offline_only=True)

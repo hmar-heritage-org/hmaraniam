@@ -2,16 +2,18 @@
 Core Language Identification Detector Engine for Hmar (hmaraniam).
 "Hmar a ni am?" -> "Is it Hmar?"
 
-Pure string-in, classification-out engine.
+Pure string-in, standardized-classification-out engine.
 """
 
 import json
+import math
 import os
 import re
 import time
+import unicodedata
 import urllib.request
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 # CDN Base URL for sharded dataset
 DEFAULT_CDN_BASE_URL = "https://cdn.jsdelivr.net/gh/hmar-heritage-org/hmaraniam@main/hmaraniam/data/shards/"
@@ -25,11 +27,17 @@ BUNDLED_SHARDS_DIR = PACKAGE_DIR / "data" / "shards"
 BUNDLED_STOPWORDS = PACKAGE_DIR / "data" / "stopwords.json"
 
 
+def strip_diacritics(s: str) -> str:
+    """Normalize string to plain ASCII representation (ṭ -> t, removing circumflexes)."""
+    s_norm = s.replace("ṭ", "t").replace("Ṭ", "T")
+    return "".join(c for c in unicodedata.normalize("NFD", s_norm) if unicodedata.category(c) != "Mn")
+
+
 class Detector:
     """
     Hmar Language Identification Detector Engine.
     
-    Provides high-precision language detection for clean Hmar text strings,
+    Provides high-precision, dual-lens language detection for clean Hmar text strings,
     distinguishing Hmar from English and other Kuki-Chin / Zo languages.
     """
 
@@ -40,6 +48,10 @@ class Detector:
         cache_ttl: int = 86400,  # 24 hours in seconds
         force_remote: bool = False,
         offline_only: bool = False,
+        custom_unigrams: Optional[Union[List[str], Set[str]]] = None,
+        extra_unigrams: Optional[Union[List[str], Set[str]]] = None,
+        custom_stopwords: Optional[Union[List[str], Set[str]]] = None,
+        disable_default_stopwords: bool = False,
     ):
         """
         Initialize Detector Engine.
@@ -49,6 +61,10 @@ class Detector:
         :param cache_ttl: Time-to-live for local cache in seconds (default: 24h).
         :param force_remote: Force redownload from CDN on initialization.
         :param offline_only: Disable network calls and use local cache/bundled data only.
+        :param custom_unigrams: Override built-in unigrams with a custom wordlist.
+        :param extra_unigrams: Supplemental unigrams to augment built-in vocabulary.
+        :param custom_stopwords: Override/supplement English stopwords.
+        :param disable_default_stopwords: Disable built-in English stopwords.
         """
         self.mode = mode.lower()
         if self.mode not in ["basic", "high"]:
@@ -60,17 +76,37 @@ class Detector:
         self.cache_ttl = cache_ttl
         self.offline_only = offline_only
 
-        self.hmar_vocab: set = set()
-        self.english_stopwords: set = set()
+        self.exact_hmar_vocab: Set[str] = set()
+        self.normalized_hmar_vocab: Set[str] = set()
+        self.english_stopwords: Set[str] = set()
 
-        self._load_stopwords()
-        self._load_unigram_shards(force_remote=force_remote)
+        # 1. Load Stopwords
+        if not disable_default_stopwords:
+            self._load_stopwords()
+
+        if custom_stopwords:
+            if disable_default_stopwords:
+                self.english_stopwords = {w.lower() for w in custom_stopwords}
+            else:
+                self.english_stopwords.update({w.lower() for w in custom_stopwords})
+
+        # 2. Load Unigrams
+        if custom_unigrams:
+            exact_words = {w.lower() for w in custom_unigrams}
+        else:
+            exact_words = self._load_unigram_shards(force_remote=force_remote)
+
+        if extra_unigrams:
+            exact_words.update({w.lower() for w in extra_unigrams})
+
+        self.exact_hmar_vocab = exact_words
+        self.normalized_hmar_vocab = {strip_diacritics(w) for w in exact_words}
 
     def _load_stopwords(self) -> None:
         """Load English stopwords from bundled data."""
         if BUNDLED_STOPWORDS.exists():
             with open(BUNDLED_STOPWORDS, "r", encoding="utf-8") as f:
-                self.english_stopwords = set(json.load(f))
+                self.english_stopwords = {w.lower() for w in json.load(f)}
         else:
             self.english_stopwords = {
                 "the", "and", "that", "for", "was", "with", "they", "have", 
@@ -96,7 +132,7 @@ class Detector:
 
         return sorted(list(shard_names))
 
-    def _load_unigram_shards(self, force_remote: bool = False) -> None:
+    def _load_unigram_shards(self, force_remote: bool = False) -> Set[str]:
         """Load Hmar unigrams vocabulary from shards based on current mode."""
         shard_filenames = self._get_shard_filenames()
         accumulated_words = set()
@@ -107,7 +143,7 @@ class Detector:
                 accumulated_words.update(words)
 
         if accumulated_words:
-            self.hmar_vocab = {w.lower() for w in accumulated_words}
+            return {w.lower() for w in accumulated_words}
         else:
             raise RuntimeError("Failed to load any Hmar unigram shards.")
 
@@ -176,25 +212,29 @@ class Detector:
 
     def detect(self, text: str) -> Dict[str, Any]:
         """
-        Pure string language classification.
+        Pure string language classification with standardized schema output.
 
         :param text: Input clean text string to classify.
-        :return: Structured result dict containing language label, confidence, and score breakdown.
+        :return: Standardized result dict containing language, confidence_score, orthography, and scores breakdown.
         """
         if not isinstance(text, str):
             raise TypeError(f"Expected text input to be a string, got {type(text).__name__}")
 
+        # Standard Empty Result Schema
         if not text or not text.strip():
             return {
                 "language": "unknown",
-                "confidence": "uncertain",
-                "mode": self.mode,
+                "confidence_score": 0.0,
+                "orthography": "none",
                 "scores": {
-                    "hmar_ratio": 0.0,
+                    "casual_hmar_ratio": 0.0,
+                    "formal_hmar_ratio": 0.0,
                     "english_stopword_ratio": 0.0,
                     "total_words": 0,
-                    "hmar_matches": 0,
-                    "english_stop_matches": 0,
+                    "hmar_words_count": 0,
+                    "non_hmar_words_count": 0,
+                    "english_stopwords_count": 0,
+                    "diacritic_words_count": 0,
                 },
             }
 
@@ -208,57 +248,87 @@ class Detector:
         if total_words == 0:
             return {
                 "language": "unknown",
-                "confidence": "uncertain",
-                "mode": self.mode,
+                "confidence_score": 0.0,
+                "orthography": "none",
                 "scores": {
-                    "hmar_ratio": 0.0,
+                    "casual_hmar_ratio": 0.0,
+                    "formal_hmar_ratio": 0.0,
                     "english_stopword_ratio": 0.0,
                     "total_words": 0,
-                    "hmar_matches": 0,
-                    "english_stop_matches": 0,
+                    "hmar_words_count": 0,
+                    "non_hmar_words_count": 0,
+                    "english_stopwords_count": 0,
+                    "diacritic_words_count": 0,
                 },
             }
 
-        hmar_matches = sum(1 for w in words if w in self.hmar_vocab)
+        # 1. Match Counts
+        casual_matches = sum(1 for w in words if strip_diacritics(w) in self.normalized_hmar_vocab)
+        formal_matches = sum(1 for w in words if w in self.exact_hmar_vocab)
         eng_stop_matches = sum(1 for w in words if w in self.english_stopwords)
+        diacritic_words_count = sum(1 for w in words if any(c in w for c in "âêîôûṭ"))
 
-        hmar_ratio = hmar_matches / total_words
+        non_hmar_words_count = total_words - casual_matches
+
+        # 2. Ratios
+        casual_hmar_ratio = casual_matches / total_words
+        formal_hmar_ratio = formal_matches / total_words
         eng_stop_ratio = eng_stop_matches / total_words
 
-        # Classification & Confidence Logic
-        if hmar_ratio >= 0.65:
-            language = "hmar"
-            confidence = "definitely" if hmar_ratio >= 0.75 else "likely"
-        elif hmar_ratio >= 0.45 and eng_stop_ratio < 0.025:
-            language = "hmar"
-            confidence = "likely"
-        elif eng_stop_ratio >= 0.025 and hmar_ratio < 0.40:
-            language = "english"
-            confidence = "definitely" if eng_stop_ratio >= 0.04 else "likely"
-        elif hmar_ratio < 0.40 and eng_stop_ratio < 0.02:
-            language = "other"  # Mizo, Kuki, Paite, or unclassified
-            confidence = "likely"
+        # 3. Orthography Tagging
+        if diacritic_words_count >= 2:
+            orthography = "formal_literary"
+        elif diacritic_words_count == 1:
+            orthography = "casual_qwerty"
         else:
-            if hmar_ratio >= 0.40 or hmar_ratio > eng_stop_ratio * 5:
+            orthography = "casual_qwerty"
+
+        # 4. Classification Logic
+        if casual_hmar_ratio >= 0.65:
+            language = "hmar"
+        elif casual_hmar_ratio >= 0.45 and eng_stop_ratio < 0.025:
+            language = "hmar"
+        elif eng_stop_ratio >= 0.025 and casual_hmar_ratio < 0.40:
+            language = "english"
+        elif casual_hmar_ratio < 0.40 and eng_stop_ratio < 0.02:
+            language = "other"  # Mizo, Kuki, Paite, or unclassified
+        else:
+            if casual_hmar_ratio >= 0.40 or casual_hmar_ratio > eng_stop_ratio * 5:
                 language = "hmar"
-                confidence = "likely"
             elif eng_stop_ratio > 0.02:
                 language = "english"
-                confidence = "likely"
             else:
                 language = "other"
-                confidence = "uncertain"
+
+        # 5. Continuous Mathematical Confidence Score calculation [0.0000 - 1.0000]
+        # Bayesian Length Weighting: W_len = 1 - exp(-N / 8)
+        len_weight = 1.0 - math.exp(-total_words / 8.0)
+
+        if language == "hmar":
+            signal = (casual_hmar_ratio - eng_stop_ratio) / 0.60
+            raw_conf = signal * len_weight
+        elif language == "english":
+            signal = (eng_stop_ratio - (casual_hmar_ratio / 5.0)) / 0.04
+            raw_conf = signal * len_weight
+        else:
+            raw_conf = 0.50 * len_weight
+
+        confidence_score = round(min(1.0, max(0.0, raw_conf)), 4)
 
         return {
             "language": language,
-            "confidence": confidence,
+            "confidence_score": confidence_score,
+            "orthography": orthography,
             "mode": self.mode,
             "scores": {
-                "hmar_ratio": round(hmar_ratio, 4),
+                "casual_hmar_ratio": round(casual_hmar_ratio, 4),
+                "formal_hmar_ratio": round(formal_hmar_ratio, 4),
                 "english_stopword_ratio": round(eng_stop_ratio, 4),
                 "total_words": total_words,
-                "hmar_matches": hmar_matches,
-                "english_stop_matches": eng_stop_matches,
+                "hmar_words_count": casual_matches,
+                "non_hmar_words_count": non_hmar_words_count,
+                "english_stopwords_count": eng_stop_matches,
+                "diacritic_words_count": diacritic_words_count,
             },
         }
 
