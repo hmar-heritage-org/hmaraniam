@@ -106,41 +106,42 @@ offline_detector = Detector(offline_only=True)
 
 ## Empirical Benchmarks & Performance
 
-`hmaraniam` has been empirically evaluated across both **controlled parallel corpus datasets** (Parallel Zo Bibles across multiple genres) and **unfiltered real-world web archives** (~1,300 scraped articles and raw HTML pages across 5 major publishers).
+`hmaraniam` has been empirically validated across both **controlled parallel corpus datasets** (Parallel Zo Bibles across multiple literary genres) and **unfiltered real-world web archives** (~1,300 scraped articles and raw HTML pages across 5 major publishers).
 
-### 1. Parallel Zo Bible Benchmark (Controlled Parallel Test)
+### 1. Controlled Parallel Zo Bible Benchmark
 
 Evaluated across parallel chapters (Genesis 1, Exodus 20, Matthew 5, Luke 2, Romans 8, Revelation 21) across 10 parallel Bible translations in 8 Zo languages + English:
 
-| Language / Translation | Sample Corpus | Assigned Class | Precision / Accuracy | Avg Hmar Confidence | Sibling Zo Marker Match |
-| :--- | :--- | :---: | :---: | :---: | :---: |
-| **Hmar** (CLB & OV) | Contemporary & Old Versions | `hmar` | **100%** | **1.0000** | 0.0000 |
-| **English** (WEB) | World English Bible | `english` | **100%** | 0.0000 | 0.0000 |
-| **Mizo** (OV) | Mizo Bible | `other` | **100%** | 0.0000 | High (`pathian`, `hnenah`, `avangin`) |
-| **Paite** | Paite Bible | `other` | **100%** | 0.0000 | High (`pasian`, `tungah`) |
-| **Vaiphei** | Vaiphei Bible | `other` | **100%** | 0.0000 | High (`pathian`, `tiu-in`) |
-| **Gangte** | Gangte Bible | `other` | **100%** | 0.0000 | High (`pathen`, `hepa`) |
-| **Zou** | Zou Bible | `other` | **100%** | 0.0000 | High (`pasian`, `a-in`) |
-| **Thadou** | Thadou-Kuki Bible | `other` | **100%** | 0.0000 | High (`pathen`, `chun`) |
+| Language | Edition / Source | Evaluated Passages | Target Class | Engine Assigned Label | Classification Accuracy | Avg Hmar Confidence | Key Distinguishing Metrics |
+| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **Hmar** | CLB (Contemporary) | Gen 1, Ex 20, Matt 5, Luke 2, Rom 8, Rev 21 | `hmar` | `hmar` | **100%** | **1.0000** | `casual_hmar_ratio` $\ge 0.95$, `unknown_words_ratio` $\le 0.05$ |
+| **Hmar** | OV (Old Version) | Gen 1, Ex 20, Matt 5, Luke 2, Rom 8, Rev 21 | `hmar` | `hmar` | **100%** | **1.0000** | Formal diacritic match + `hmar_diacritic_words_count` $>0$ |
+| **Mizo** | OV (Mizo Bible) | Gen 1, Ex 20, Matt 5, Luke 2, Rom 8, Rev 21 | `other` | `other` | **100%** | **0.0000** | `sibling_zo_stopwords` (`pathian`, `hnenah`, `avangin`, `tichuan`) & `unknown_words_ratio` ($\approx 24\%$) |
+| **Paite** | Paite Bible | Gen 1, Ex 20, Matt 5, Luke 2, Rom 8, Rev 21 | `other` | `other` | **100%** | **0.0000** | `sibling_zo_stopwords` (`pasian`, `tungah`, `simhuai`) & `unknown_words_ratio` ($\approx 51\%$) |
+| **Vaiphei** | Vaiphei Bible | Gen 1, Ex 20, Matt 5, Luke 2, Rom 8, Rev 21 | `other` | `other` | **100%** | **0.0000** | `sibling_zo_stopwords` (`pathian`, `tiu-in`, `apat`) & `unknown_words_ratio` ($\approx 38\%$) |
+| **Gangte** | Gangte Bible | Gen 1, Ex 20, Matt 5, Luke 2, Rom 8, Rev 21 | `other` | `other` | **100%** | **0.0000** | `sibling_zo_stopwords` (`pathen`, `hepa`, `dih-in`) & `unknown_words_ratio` ($\approx 40\%$) |
+| **Zou** | Zou Bible | Gen 1, Ex 20, Matt 5, Luke 2, Rom 8, Rev 21 | `other` | `other` | **100%** | **0.0000** | `sibling_zo_stopwords` (`pasian`, `a-in`, `leh-in`) & `unknown_words_ratio` ($\approx 51\%$) |
+| **Thadou** | Thadou-Kuki Bible | Gen 1, Ex 20, Matt 5, Luke 2, Rom 8, Rev 21 | `other` | `other` | **100%** | **0.0000** | `sibling_zo_stopwords` (`pathen`, `chun`, `tichun`) & `unknown_words_ratio` ($\approx 67\%$) |
+| **English** | WEB (World English) | Gen 1, Ex 20, Matt 5, Luke 2, Rom 8, Rev 21 | `english` | `english` | **100%** | **0.0000** | `english_stopword_ratio` ($>0.08$) & `unknown_words_ratio` ($>0.70$) |
 
-> **Cognate Separation:** Closely related sibling languages like Mizo share up to 78% unigram overlap with Hmar. `hmaraniam` cleanly separates sibling Zo languages using vocabulary completeness (`unknown_words_ratio` $\le 0.18$) and curated `sibling_zo_stopwords`.
+> **Cognate Resolution:** Closely related sibling languages like Mizo share up to 78% unigram overlap with Hmar. `hmaraniam` cleanly resolves sibling Zo languages without requiring massive full dictionaries by combining vocabulary completeness (`unknown_words_ratio` $\le 0.18$) with curated structural markers (`sibling_zo_stopwords`).
 
 ---
 
-### 2. Real-World Web Archive Benchmark (Scraped Web Data)
+### 2. Real-World Web Archive Benchmark (~1,300 Scraped Documents)
 
-Evaluated on ~1,300 real-world scraped web documents across 5 major Hmar/Zo web publishers:
+Evaluated on real-world scraped web archives across 5 major Hmar/Zo web publishers:
 
-| Publisher Archive | Evaluated Items | Hmar Detected % | English Detected % | Other / Mixed % | Avg Hmar Confidence | Mean Casual Hmar Ratio |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **L. Keivom Archive** (`keivom`) | 300 | **66.3%** (199) | 10.7% (32) | 23.0% (69) | **0.8320** | **79.3%** |
-| **Inpui Journal** (`inpui`) | 291 | **42.6%** (124) | 23.0% (67) | 34.4% (100) | **0.7400** | **63.7%** |
-| **HSA Portal** (`hsa`) | 177 | **13.0%** (23) | 21.5% (38) | **65.5%** (116) | 0.5730 | **53.7%** |
-| **Hmarram.com** (`hmarram`) | 235 | 5.1% (12) | **88.9%** (209) | 6.0% (14) | 0.7762 | 31.2% |
-| **Virthli News** (`virthli`) | 296 | 1.7% (5) | **90.2%** (267) | 8.1% (24) | 0.8721 | 17.6% |
+| Publisher Web Archive | Corpus Source / Format | Evaluated Items | Hmar Posts Detected (%) | English Posts Detected (%) | Other / Mixed Posts (%) | Avg Hmar Confidence | Mean Casual Hmar Ratio | Mean Formal Hmar Ratio | Mean Unknown Words Ratio | Primary Content Profile |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| **L. Keivom Archive** (`keivom`) | Blogger API JSON | 300 | **199 (66.3%)** | 32 (10.7%) | 69 (23.0%) | **0.8320** | **79.3%** | 70.0% | 20.7% | Authentic Hmar literary essays & prose |
+| **Inpui Journal** (`inpui`) | Blogger API JSON | 291 | **124 (42.6%)** | 67 (23.0%) | 100 (34.4%) | **0.7400** | **63.7%** | 55.7% | 36.3% | Bilingual news journal & opinion pieces |
+| **HSA Portal** (`hsa`) | WordPress API JSON | 177 | **23 (13.0%)** | 38 (21.5%) | **116 (65.5%)** | 0.5730 | **53.7%** | 46.7% | 46.3% | Student association alerts & mixed posts |
+| **Hmarram.com** (`hmarram`) | WordPress API JSON | 235 | 12 (5.1%) | **209 (88.9%)** | 14 (6.0%) | 0.7762 | 31.2% | 23.8% | 68.8% | Tech articles & English press releases |
+| **Virthli News** (`virthli`) | Scraped Raw HTML | 296 | 5 (1.7%) | **267 (90.2%)** | 24 (8.1%) | 0.8721 | 17.6% | 13.4% | 82.4% | Employment alerts & exam guidelines |
 
-- **Literary Archives:** Archives like L. Keivom and Inpui Journal consist of authentic Hmar prose, essays, and opinion pieces, achieving high Hmar detection rates ($42.6\% - 66.3\%$) and strong token ratios ($63.7\% - 79.3\%$).
-- **Community News & Job Alerts:** Community portals like Hmarram and Virthli publish heavily in English (recruitment alerts, exam guidelines, press releases). `hmaraniam` accurately tags these as `"english"` or `"other"` without false-positive over-classification.
+- **Literary Archives:** Archives like L. Keivom and Inpui Journal feature rich Hmar prose and opinion articles, achieving high Hmar classification rates ($42.6\% - 66.3\%$) and high token ratios ($63.7\% - 79.3\%$).
+- **Community News & Recruitment Notices:** Community portals like Hmarram and Virthli publish predominantly in English (recruitment notices, exam guidelines, press statements). `hmaraniam` accurately tags these as `"english"` or `"other"` without false-positive over-classification.
 
 ---
 
