@@ -1,9 +1,9 @@
 """
-Unit tests for hmaraniam detector with error handling, HTML, and sharding support.
+Unit tests for hmaraniam pure string detector engine.
 """
 
 import unittest
-from hmaraniam import Detector, detect, detect_file, detect_html
+from hmaraniam import Detector, detect
 
 
 class TestHmaraniam(unittest.TestCase):
@@ -23,22 +23,6 @@ class TestHmaraniam(unittest.TestCase):
         self.assertEqual(res["language"], "hmar")
         self.assertEqual(res["mode"], "high")
 
-    def test_detect_html(self):
-        raw_html = """
-        <html>
-            <head><title>Test Page</title><style>body { color: red; }</style></head>
-            <body>
-                <!-- HTML Comment -->
-                <script>console.log("ignore me");</script>
-                <h1>Tuking Chanchinbu</h1>
-                <p>Tuking chanchinbu a hung suok tlangval a nih. https://virthli.in/article/123</p>
-            </body>
-        </html>
-        """
-        res = detect_html(raw_html)
-        self.assertEqual(res["language"], "hmar")
-        self.assertGreater(res["scores"]["hmar_ratio"], 0.5)
-
     def test_english_detection(self):
         sample_text = "The quick brown fox jumps over the lazy dog. This is an official notice and document for the public."
         res = detect(sample_text)
@@ -57,9 +41,6 @@ class TestHmaraniam(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             detect(12345)  # type: ignore
-
-        with self.assertRaises(FileNotFoundError):
-            detect_file("non_existent_file_path_xyz.html")
 
     def test_detector_offline_mode(self):
         detector = Detector(offline_only=True)

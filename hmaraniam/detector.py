@@ -1,6 +1,8 @@
 """
-Core Language Identification Detector for Hmar (hmaraniam).
+Core Language Identification Detector Engine for Hmar (hmaraniam).
 "Hmar a ni am?" -> "Is it Hmar?"
+
+Pure string-in, classification-out engine.
 """
 
 import json
@@ -9,7 +11,7 @@ import re
 import time
 import urllib.request
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 # CDN Base URL for sharded dataset
 DEFAULT_CDN_BASE_URL = "https://cdn.jsdelivr.net/gh/hmar-heritage-org/hmaraniam@main/hmaraniam/data/shards/"
@@ -25,9 +27,9 @@ BUNDLED_STOPWORDS = PACKAGE_DIR / "data" / "stopwords.json"
 
 class Detector:
     """
-    Hmar Language Identification Detector.
+    Hmar Language Identification Detector Engine.
     
-    Provides high-precision language detection for Hmar text,
+    Provides high-precision language detection for clean Hmar text strings,
     distinguishing Hmar from English and other Kuki-Chin / Zo languages.
     """
 
@@ -40,7 +42,7 @@ class Detector:
         offline_only: bool = False,
     ):
         """
-        Initialize Detector.
+        Initialize Detector Engine.
 
         :param mode: Detection mode - "basic" (fast ~30k core unigrams) or "high" (all unigram shards).
         :param cdn_base_url: Optional custom CDN base URL for remote unigram shards.
@@ -80,7 +82,6 @@ class Detector:
         if self.mode == "basic":
             return ["unigrams_set_001.json"]
 
-        # For "high" mode, dynamically discover all unigrams_set_*.json in bundled or cached dir
         shard_names = set()
         if BUNDLED_SHARDS_DIR.exists():
             for p in BUNDLED_SHARDS_DIR.glob("unigrams_set_*.json"):
@@ -116,12 +117,10 @@ class Detector:
         bundled_path = BUNDLED_SHARDS_DIR / shard_name
         loaded_data: Optional[List[str]] = None
 
-        # 1. Try Remote CDN if network enabled
         if not self.offline_only:
             if force_remote or self._should_fetch_remote(cache_path):
                 loaded_data = self._fetch_shard_from_cdn(shard_name, cache_path)
 
-        # 2. Try Local Cache if CDN fetch didn't happen or failed
         if loaded_data is None and cache_path.exists():
             try:
                 with open(cache_path, "r", encoding="utf-8") as f:
@@ -129,7 +128,6 @@ class Detector:
             except Exception:
                 loaded_data = None
 
-        # 3. Fallback to package bundled shards
         if loaded_data is None and bundled_path.exists():
             try:
                 with open(bundled_path, "r", encoding="utf-8") as f:
@@ -173,14 +171,14 @@ class Detector:
 
                     return data
         except Exception:
-            pass  # Fail gracefully to cache or bundled data
+            pass
         return None
 
     def detect(self, text: str) -> Dict[str, Any]:
         """
-        Detect language of a given text string.
+        Pure string language classification.
 
-        :param text: Input text to classify.
+        :param text: Input clean text string to classify.
         :return: Structured result dict containing language label, confidence, and score breakdown.
         """
         if not isinstance(text, str):
@@ -264,30 +262,16 @@ class Detector:
             },
         }
 
-    def detect_html(self, raw_html: str) -> Dict[str, Any]:
-        """
-        Extract clean body text from raw HTML and detect language.
-
-        :param raw_html: Raw HTML string.
-        :return: Structured result dict.
-        """
-        if not raw_html:
-            return self.detect("")
-
-        # Strip HTML comments, scripts, styles, and tags
-        text = re.sub(r"<!--.*?-->", " ", raw_html, flags=re.DOTALL)
-        text = re.sub(r"<script.*?>.*?</script>", " ", text, flags=re.DOTALL | re.IGNORECASE)
-        text = re.sub(r"<style.*?>.*?</style>", " ", text, flags=re.DOTALL | re.IGNORECASE)
-        text = re.sub(r"<[^>]+>", " ", text)
-        return self.detect(text.strip())
-
     def detect_paragraphs(self, text: str) -> List[Dict[str, Any]]:
         """
         Split text into paragraphs and classify each paragraph independently.
 
-        :param text: Input multi-paragraph text.
+        :param text: Input multi-paragraph text string.
         :return: List of dicts per non-empty paragraph.
         """
+        if not isinstance(text, str):
+            raise TypeError(f"Expected text input to be a string, got {type(text).__name__}")
+
         paragraphs = [p.strip() for p in text.split("\n") if p.strip()]
         results = []
         for index, paragraph in enumerate(paragraphs):
@@ -323,23 +307,3 @@ def detect(text: str, mode: str = "basic") -> Dict[str, Any]:
         return get_default_detector().detect(text)
     detector = Detector(mode=mode)
     return detector.detect(text)
-
-
-def detect_html(raw_html: str, mode: str = "basic") -> Dict[str, Any]:
-    """Top-level helper function to extract text from HTML and detect language."""
-    if mode == "basic":
-        return get_default_detector().detect_html(raw_html)
-    detector = Detector(mode=mode)
-    return detector.detect_html(raw_html)
-
-
-def detect_file(filepath: Union[str, Path], mode: str = "basic") -> Dict[str, Any]:
-    """Helper function to read a text file and detect its language."""
-    path = Path(filepath)
-    if not path.exists() or not path.is_file():
-        raise FileNotFoundError(f"Target file does not exist or is not a valid file: '{filepath}'")
-
-    text = path.read_text(encoding="utf-8", errors="ignore")
-    if path.suffix.lower() in [".html", ".htm", ".xhtml"]:
-        return detect_html(text, mode=mode)
-    return detect(text, mode=mode)
