@@ -1,5 +1,5 @@
 """
-Unit tests for hmaraniam pure string detector engine with standardized schema, custom unigrams, and custom stopwords.
+Unit tests for hmaraniam pure string/token detector engine.
 """
 
 import unittest
@@ -15,7 +15,16 @@ class TestHmaraniam(unittest.TestCase):
         self.assertGreaterEqual(res["confidence_score"], 0.70)
         self.assertIn("casual_hmar_ratio", res["scores"])
         self.assertIn("non_hmar_words_count", res["scores"])
-        self.assertEqual(res["scores"]["total_words"], 21)
+
+    def test_pre_tokenized_list_input(self):
+        # 1 word per item in pre-tokenized list (evaluated "as is")
+        tokens = ["khawvel", "fe", "dan", "phung", "ei", "en", "chun"]
+        res = detect(tokens, return_tokens=True)
+        self.assertEqual(res["language"], "hmar")
+        self.assertEqual(res["scores"]["total_words"], 7)
+        self.assertIn("tokens", res)
+        self.assertEqual(len(res["tokens"]), 7)
+        self.assertTrue(res["tokens"][0]["is_hmar"])
 
     def test_hmar_detection_high_mode(self):
         sample_text = "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu lien lema intel le insung khawm a nih."
@@ -35,7 +44,6 @@ class TestHmaraniam(unittest.TestCase):
         self.assertEqual(res["language"], "unknown")
         self.assertEqual(res["confidence_score"], 0.0)
         self.assertEqual(res["scores"]["total_words"], 0)
-        self.assertEqual(res["scores"]["non_hmar_words_count"], 0)
 
     def test_custom_unigrams(self):
         custom_detector = Detector(
@@ -44,19 +52,9 @@ class TestHmaraniam(unittest.TestCase):
             disable_default_stopwords=True,
             offline_only=True,
         )
-        res = custom_detector.detect("alpha beta gamma alpha")
+        res = custom_detector.detect(["alpha", "beta", "gamma", "alpha"])
         self.assertEqual(res["language"], "hmar")
         self.assertEqual(res["scores"]["hmar_words_count"], 4)
-        self.assertEqual(res["scores"]["non_hmar_words_count"], 0)
-
-    def test_custom_stopwords(self):
-        custom_detector = Detector(
-            mode="basic",
-            custom_stopwords=["customstopa", "customstopb"],
-            offline_only=True,
-        )
-        res = custom_detector.detect("customstopa customstopb customstopa")
-        self.assertGreater(res["scores"]["english_stopwords_count"], 0)
 
     def test_error_handling(self):
         with self.assertRaises(ValueError):

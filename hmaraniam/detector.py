@@ -210,63 +210,58 @@ class Detector:
             pass
         return None
 
-    def detect(self, text: str) -> Dict[str, Any]:
+    def detect(self, text_or_tokens: Union[str, List[str]], return_tokens: bool = False) -> Dict[str, Any]:
         """
-        Pure string language classification with standardized schema output.
+        Pure token or string language classification with standardized schema output.
 
-        :param text: Input clean text string to classify.
-        :return: Standardized result dict containing language, confidence_score, orthography, and scores breakdown.
+        :param text_or_tokens: Clean text string OR pre-tokenized list of word tokens (1 word per item).
+        :param return_tokens: Include token-by-token classification breakdown in output.
+        :return: Standardized result dict.
         """
-        if not isinstance(text, str):
-            raise TypeError(f"Expected text input to be a string, got {type(text).__name__}")
+        if isinstance(text_or_tokens, (list, tuple)):
+            # Pre-tokenized input (1 word per item - evaluated "as is")
+            words = [str(w).lower().strip() for w in text_or_tokens if str(w).strip()]
+        elif isinstance(text_or_tokens, str):
+            if not text_or_tokens or not text_or_tokens.strip():
+                return self._empty_result()
+            # Strip URLs and emails before tokenization
+            cleaned_text = re.sub(r"https?://\S+|www\.\S+", " ", text_or_tokens)
+            cleaned_text = re.sub(r"\b[\w\.-]+@[\w\.-]+\.\w+\b", " ", cleaned_text)
+            words = [w.lower() for w in re.findall(r"\b[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF]+\b", cleaned_text)]
+        else:
+            raise TypeError(f"Expected input to be a string or list of tokens, got {type(text_or_tokens).__name__}")
 
-        # Standard Empty Result Schema
-        if not text or not text.strip():
-            return {
-                "language": "unknown",
-                "confidence_score": 0.0,
-                "orthography": "none",
-                "scores": {
-                    "casual_hmar_ratio": 0.0,
-                    "formal_hmar_ratio": 0.0,
-                    "english_stopword_ratio": 0.0,
-                    "total_words": 0,
-                    "hmar_words_count": 0,
-                    "non_hmar_words_count": 0,
-                    "english_stopwords_count": 0,
-                    "diacritic_words_count": 0,
-                },
-            }
-
-        # Strip URLs and email addresses before tokenization
-        cleaned_text = re.sub(r"https?://\S+|www\.\S+", " ", text)
-        cleaned_text = re.sub(r"\b[\w\.-]+@[\w\.-]+\.\w+\b", " ", cleaned_text)
-
-        words = [w.lower() for w in re.findall(r"\b[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF]+\b", cleaned_text)]
         total_words = len(words)
-
         if total_words == 0:
-            return {
-                "language": "unknown",
-                "confidence_score": 0.0,
-                "orthography": "none",
-                "scores": {
-                    "casual_hmar_ratio": 0.0,
-                    "formal_hmar_ratio": 0.0,
-                    "english_stopword_ratio": 0.0,
-                    "total_words": 0,
-                    "hmar_words_count": 0,
-                    "non_hmar_words_count": 0,
-                    "english_stopwords_count": 0,
-                    "diacritic_words_count": 0,
-                },
-            }
+            return self._empty_result()
 
-        # 1. Match Counts
-        casual_matches = sum(1 for w in words if strip_diacritics(w) in self.normalized_hmar_vocab)
-        formal_matches = sum(1 for w in words if w in self.exact_hmar_vocab)
-        eng_stop_matches = sum(1 for w in words if w in self.english_stopwords)
-        diacritic_words_count = sum(1 for w in words if any(c in w for c in "âêîôûṭ"))
+        # 1. Match Counts & Breakdown
+        token_breakdown = []
+        casual_matches = 0
+        formal_matches = 0
+        eng_stop_matches = 0
+        diacritic_words_count = 0
+
+        for w in words:
+            w_norm = strip_diacritics(w)
+            is_casual_hmar = w_norm in self.normalized_hmar_vocab
+            is_formal_hmar = w in self.exact_hmar_vocab
+            is_eng_stop = w in self.english_stopwords
+            has_diacritic = any(c in w for c in "âêîôûṭ")
+
+            if is_casual_hmar: casual_matches += 1
+            if is_formal_hmar: formal_matches += 1
+            if is_eng_stop: eng_stop_matches += 1
+            if has_diacritic: diacritic_words_count += 1
+
+            if return_tokens:
+                token_breakdown.append({
+                    "word": w,
+                    "is_hmar": is_casual_hmar,
+                    "is_formal_hmar": is_formal_hmar,
+                    "is_english_stop": is_eng_stop,
+                    "has_diacritic": has_diacritic,
+                })
 
         non_hmar_words_count = total_words - casual_matches
 
@@ -315,7 +310,7 @@ class Detector:
 
         confidence_score = round(min(1.0, max(0.0, raw_conf)), 4)
 
-        return {
+        result = {
             "language": language,
             "confidence_score": confidence_score,
             "orthography": orthography,
@@ -329,6 +324,30 @@ class Detector:
                 "non_hmar_words_count": non_hmar_words_count,
                 "english_stopwords_count": eng_stop_matches,
                 "diacritic_words_count": diacritic_words_count,
+            },
+        }
+
+        if return_tokens:
+            result["tokens"] = token_breakdown
+
+        return result
+
+    def _empty_result(self) -> Dict[str, Any]:
+        """Return standardized result structure for empty input."""
+        return {
+            "language": "unknown",
+            "confidence_score": 0.0,
+            "orthography": "none",
+            "mode": self.mode,
+            "scores": {
+                "casual_hmar_ratio": 0.0,
+                "formal_hmar_ratio": 0.0,
+                "english_stopword_ratio": 0.0,
+                "total_words": 0,
+                "hmar_words_count": 0,
+                "non_hmar_words_count": 0,
+                "english_stopwords_count": 0,
+                "diacritic_words_count": 0,
             },
         }
 
@@ -364,16 +383,20 @@ def get_default_detector() -> Detector:
     return _default_detector
 
 
-def detect(text: str, mode: str = "basic") -> Dict[str, Any]:
+def detect(
+    text_or_tokens: Union[str, List[str]],
+    mode: str = "basic",
+    return_tokens: bool = False
+) -> Dict[str, Any]:
     """
-    Top-level helper function to detect language of a text string.
+    Top-level helper function to detect language of a text string OR pre-tokenized list of word tokens.
 
     >>> import hmaraniam
-    >>> res = hmaraniam.detect("Tuking chanchinbu a hung suok tlangval a nih.")
+    >>> res = hmaraniam.detect(["khawvel", "fe", "dan", "phung"])
     >>> res["language"]
     'hmar'
     """
     if mode == "basic":
-        return get_default_detector().detect(text)
+        return get_default_detector().detect(text_or_tokens, return_tokens=return_tokens)
     detector = Detector(mode=mode)
-    return detector.detect(text)
+    return detector.detect(text_or_tokens, return_tokens=return_tokens)
