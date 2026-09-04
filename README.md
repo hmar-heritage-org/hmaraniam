@@ -12,7 +12,7 @@
 
 - **Microsecond Speed:** $O(1)$ dictionary lookups with no heavy ML dependencies (PyTorch/TensorFlow free).
 - **Dual-Lens Diacritic Engine:** Reports both `casual_hmar_ratio` (ASCII-normalized for standard QWERTY typing) and `formal_hmar_ratio` (exact diacritic matching for formal literary text).
-- **Mathematical Confidence Score:** Returns an empirical, quantitative `confidence_score` between `0.0000` and `1.0000` (incorporating Bayesian document length weighting).
+- **Dual Continuous Confidence Metrics:** Disambiguates language metrics into `hmar_confidence` (permanent metric answering *"How confident are we that this text is Hmar?"*) and `detected_language_confidence` (confidence in the overall classification choice).
 - **Standardized Schema:** Guarantees an immutable JSON output structure across all calls, including `non_hmar_words_count` and `diacritic_words_count`.
 - **Extensible & Customizable:** Allows developers to supply `custom_unigrams`, `extra_unigrams`, `custom_stopwords`, or disable default stopwords.
 - **Dual Offline/CDN Architecture:** Automatically syncs with the live `hmar-heritage-org/hmaraniam` unigram dataset via jsDelivr CDN, with automatic local disk caching and bundled fallback.
@@ -32,18 +32,24 @@ pip install hmaraniam
 ```json
 {
   "language": "hmar",
-  "confidence_score": 0.9452,
-  "orthography": "casual_qwerty",
+  "hmar_confidence": 0.9842,
+  "detected_language_confidence": 0.9842,
   "mode": "basic",
   "scores": {
     "casual_hmar_ratio": 0.9524,
     "formal_hmar_ratio": 0.8095,
     "english_stopword_ratio": 0.0000,
+    "sibling_zo_stopword_ratio": 0.0000,
+    "unknown_words_ratio": 0.0476,
     "total_words": 21,
     "hmar_words_count": 20,
     "non_hmar_words_count": 1,
+    "unknown_words_count": 1,
     "english_stopwords_count": 0,
-    "diacritic_words_count": 1
+    "sibling_zo_stopwords_count": 0,
+    "hmar_diacritic_words_count": 17,
+    "non_hmar_diacritic_words_count": 0,
+    "total_diacritic_words_count": 17
   }
 }
 ```

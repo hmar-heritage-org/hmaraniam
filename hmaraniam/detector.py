@@ -25,6 +25,7 @@ CACHE_META = CACHE_DIR / "cache_meta.json"
 PACKAGE_DIR = Path(__file__).parent
 BUNDLED_SHARDS_DIR = PACKAGE_DIR / "data" / "shards"
 BUNDLED_STOPWORDS = PACKAGE_DIR / "data" / "stopwords.json"
+BUNDLED_SIBLING_STOPWORDS = PACKAGE_DIR / "data" / "sibling_zo_stopwords.json"
 
 
 def strip_diacritics(s: str) -> str:
@@ -38,7 +39,7 @@ class Detector:
     Hmar Language Identification Detector Engine.
     
     Provides high-precision, dual-lens language detection for clean Hmar text strings,
-    distinguishing Hmar from English and other Kuki-Chin / Zo languages.
+    distinguishing Hmar from English and sibling Zo (Kuki-Chin) languages.
     """
 
     def __init__(
@@ -53,19 +54,6 @@ class Detector:
         custom_stopwords: Optional[Union[List[str], Set[str]]] = None,
         disable_default_stopwords: bool = False,
     ):
-        """
-        Initialize Detector Engine.
-
-        :param mode: Detection mode - "basic" (fast ~30k core unigrams) or "high" (all unigram shards).
-        :param cdn_base_url: Optional custom CDN base URL for remote unigram shards.
-        :param cache_ttl: Time-to-live for local cache in seconds (default: 24h).
-        :param force_remote: Force redownload from CDN on initialization.
-        :param offline_only: Disable network calls and use local cache/bundled data only.
-        :param custom_unigrams: Override built-in unigrams with a custom wordlist.
-        :param extra_unigrams: Supplemental unigrams to augment built-in vocabulary.
-        :param custom_stopwords: Override/supplement English stopwords.
-        :param disable_default_stopwords: Disable built-in English stopwords.
-        """
         self.mode = mode.lower()
         if self.mode not in ["basic", "high"]:
             raise ValueError(
@@ -79,6 +67,7 @@ class Detector:
         self.exact_hmar_vocab: Set[str] = set()
         self.normalized_hmar_vocab: Set[str] = set()
         self.english_stopwords: Set[str] = set()
+        self.sibling_zo_stopwords: Set[str] = set()
 
         # 1. Load Stopwords
         if not disable_default_stopwords:
@@ -103,7 +92,7 @@ class Detector:
         self.normalized_hmar_vocab = {strip_diacritics(w) for w in exact_words}
 
     def _load_stopwords(self) -> None:
-        """Load English stopwords from bundled data."""
+        """Load English and sibling Zo stopwords from bundled data."""
         if BUNDLED_STOPWORDS.exists():
             with open(BUNDLED_STOPWORDS, "r", encoding="utf-8") as f:
                 self.english_stopwords = {w.lower() for w in json.load(f)}
@@ -112,6 +101,12 @@ class Detector:
                 "the", "and", "that", "for", "was", "with", "they", "have", 
                 "from", "had", "by", "but", "what", "there", "were", "your"
             }
+
+        if BUNDLED_SIBLING_STOPWORDS.exists():
+            with open(BUNDLED_SIBLING_STOPWORDS, "r", encoding="utf-8") as f:
+                self.sibling_zo_stopwords = {strip_diacritics(w.lower()) for w in json.load(f)}
+        else:
+            self.sibling_zo_stopwords = set()
 
     def _get_shard_filenames(self) -> List[str]:
         """Determine which shard filenames to load based on mode."""
@@ -210,12 +205,11 @@ class Detector:
             pass
         return None
 
-    def detect(self, text_or_tokens: Union[str, List[str]], return_tokens: bool = False) -> Dict[str, Any]:
+    def detect(self, text_or_tokens: Union[str, List[str]]) -> Dict[str, Any]:
         """
         Pure token or string language classification with standardized schema output.
 
         :param text_or_tokens: Clean text string OR pre-tokenized list of word tokens (1 word per item).
-        :param return_tokens: Include token-by-token classification breakdown in output.
         :return: Standardized result dict.
         """
         if isinstance(text_or_tokens, (list, tuple)):
@@ -235,119 +229,123 @@ class Detector:
         if total_words == 0:
             return self._empty_result()
 
-        # 1. Match Counts & Breakdown
-        token_breakdown = []
-        casual_matches = 0
-        formal_matches = 0
-        eng_stop_matches = 0
-        diacritic_words_count = 0
+        # 1. Match Counts
+        casual_matches = sum(1 for w in words if strip_diacritics(w) in self.normalized_hmar_vocab)
+        formal_matches = sum(1 for w in words if w in self.exact_hmar_vocab)
+        eng_stop_matches = sum(1 for w in words if w in self.english_stopwords)
+        sibling_zo_matches = sum(1 for w in words if strip_diacritics(w) in self.sibling_zo_stopwords)
+
+        # Diacritic breakdown
+        hmar_diacritic_words_count = 0
+        non_hmar_diacritic_words_count = 0
 
         for w in words:
-            w_norm = strip_diacritics(w)
-            is_casual_hmar = w_norm in self.normalized_hmar_vocab
-            is_formal_hmar = w in self.exact_hmar_vocab
-            is_eng_stop = w in self.english_stopwords
-            has_diacritic = any(c in w for c in "âêîôûṭ")
+            has_diacritic = (strip_diacritics(w) != w) or any(c in w for c in "âêîôûṭÂÊÎÔÛṬ")
+            if has_diacritic:
+                if strip_diacritics(w) in self.normalized_hmar_vocab:
+                    hmar_diacritic_words_count += 1
+                else:
+                    non_hmar_diacritic_words_count += 1
 
-            if is_casual_hmar: casual_matches += 1
-            if is_formal_hmar: formal_matches += 1
-            if is_eng_stop: eng_stop_matches += 1
-            if has_diacritic: diacritic_words_count += 1
-
-            if return_tokens:
-                token_breakdown.append({
-                    "word": w,
-                    "is_hmar": is_casual_hmar,
-                    "is_formal_hmar": is_formal_hmar,
-                    "is_english_stop": is_eng_stop,
-                    "has_diacritic": has_diacritic,
-                })
-
+        total_diacritic_words_count = hmar_diacritic_words_count + non_hmar_diacritic_words_count
         non_hmar_words_count = total_words - casual_matches
+        unknown_words_count = non_hmar_words_count
+        unknown_words_ratio = non_hmar_words_count / total_words
 
         # 2. Ratios
         casual_hmar_ratio = casual_matches / total_words
         formal_hmar_ratio = formal_matches / total_words
         eng_stop_ratio = eng_stop_matches / total_words
+        sibling_zo_ratio = sibling_zo_matches / total_words
 
-        # 3. Orthography Tagging
-        if diacritic_words_count >= 2:
-            orthography = "formal_literary"
-        elif diacritic_words_count == 1:
-            orthography = "casual_qwerty"
-        else:
-            orthography = "casual_qwerty"
-
-        # 4. Classification Logic
-        if casual_hmar_ratio >= 0.65:
-            language = "hmar"
-        elif casual_hmar_ratio >= 0.45 and eng_stop_ratio < 0.025:
-            language = "hmar"
-        elif eng_stop_ratio >= 0.025 and casual_hmar_ratio < 0.40:
+        # 3. Classification Logic
+        if eng_stop_ratio >= 0.025 and casual_hmar_ratio < 0.40:
             language = "english"
-        elif casual_hmar_ratio < 0.40 and eng_stop_ratio < 0.02:
-            language = "other"  # Mizo, Kuki, Paite, or unclassified
+        elif casual_hmar_ratio >= 0.82 and unknown_words_ratio <= 0.18:
+            language = "hmar"
+        elif casual_hmar_ratio >= 0.70 and eng_stop_ratio < 0.01 and non_hmar_diacritic_words_count == 0:
+            language = "hmar"
+        elif eng_stop_ratio >= 0.02:
+            language = "english"
         else:
-            if casual_hmar_ratio >= 0.40 or casual_hmar_ratio > eng_stop_ratio * 5:
-                language = "hmar"
-            elif eng_stop_ratio > 0.02:
-                language = "english"
-            else:
-                language = "other"
+            language = "other"  # Mizo, Paite, Vaiphei, Zou, Gangte, Thadou, or unclassified
 
-        # 5. Continuous Mathematical Confidence Score calculation [0.0000 - 1.0000]
-        # Bayesian Length Weighting: W_len = 1 - exp(-N / 8)
-        len_weight = 1.0 - math.exp(-total_words / 8.0)
+        # 4. Continuous Mathematical Confidence Score calculation [0.0000 - 1.0000]
+        # Bayesian Length Weighting: W_len = 1 - exp(-N / 6)
+        len_weight = 1.0 - math.exp(-total_words / 6.0)
 
+        # 4a. Permanent Hmar Confidence (Answers: "How confident are we that this text is Hmar?")
+        # Penalizes high unknown_words_ratio and English stopwords
+        hmar_signal = max(0.0, casual_hmar_ratio - (unknown_words_ratio * 1.5) - (eng_stop_ratio * 3.0))
+        hmar_conf_raw = min(1.0, hmar_signal / 0.75) * len_weight
+        hmar_confidence = round(min(1.0, max(0.0, hmar_conf_raw)), 4)
+
+        # 4b. Detected Language Confidence (Confidence in the overall classification choice)
         if language == "hmar":
-            signal = (casual_hmar_ratio - eng_stop_ratio) / 0.60
-            raw_conf = signal * len_weight
+            detected_language_confidence = hmar_confidence
         elif language == "english":
-            signal = (eng_stop_ratio - (casual_hmar_ratio / 5.0)) / 0.04
-            raw_conf = signal * len_weight
+            eng_signal = max(0.0, eng_stop_ratio - (casual_hmar_ratio / 5.0))
+            eng_conf_raw = min(1.0, eng_signal / 0.04) * len_weight
+            detected_language_confidence = round(min(1.0, max(0.0, eng_conf_raw)), 4)
+        elif language == "other":
+            if sibling_zo_matches > 0 or sibling_zo_ratio >= 0.01:
+                # Actively verified non-Hmar Zo (Kuki-Chin) sibling language match!
+                sibling_signal = max(0.0, (sibling_zo_ratio * 4.0) + (unknown_words_ratio * 0.5))
+                other_conf_raw = min(1.0, sibling_signal) * len_weight
+                detected_language_confidence = round(min(1.0, max(0.75, other_conf_raw)), 4)
+            else:
+                # Out-of-scope external language or unclassified noise
+                other_signal = max(0.0, unknown_words_ratio - eng_stop_ratio)
+                other_conf_raw = min(0.50, other_signal * 0.5) * len_weight
+                detected_language_confidence = round(min(0.50, max(0.0, other_conf_raw)), 4)
         else:
-            raw_conf = 0.50 * len_weight
+            detected_language_confidence = 0.0
 
-        confidence_score = round(min(1.0, max(0.0, raw_conf)), 4)
-
-        result = {
+        return {
             "language": language,
-            "confidence_score": confidence_score,
-            "orthography": orthography,
+            "hmar_confidence": hmar_confidence,
+            "detected_language_confidence": detected_language_confidence,
             "mode": self.mode,
             "scores": {
                 "casual_hmar_ratio": round(casual_hmar_ratio, 4),
                 "formal_hmar_ratio": round(formal_hmar_ratio, 4),
                 "english_stopword_ratio": round(eng_stop_ratio, 4),
+                "sibling_zo_stopword_ratio": round(sibling_zo_ratio, 4),
+                "unknown_words_ratio": round(unknown_words_ratio, 4),
                 "total_words": total_words,
                 "hmar_words_count": casual_matches,
                 "non_hmar_words_count": non_hmar_words_count,
+                "unknown_words_count": unknown_words_count,
                 "english_stopwords_count": eng_stop_matches,
-                "diacritic_words_count": diacritic_words_count,
+                "sibling_zo_stopwords_count": sibling_zo_matches,
+                "hmar_diacritic_words_count": hmar_diacritic_words_count,
+                "non_hmar_diacritic_words_count": non_hmar_diacritic_words_count,
+                "total_diacritic_words_count": total_diacritic_words_count,
             },
         }
-
-        if return_tokens:
-            result["tokens"] = token_breakdown
-
-        return result
 
     def _empty_result(self) -> Dict[str, Any]:
         """Return standardized result structure for empty input."""
         return {
             "language": "unknown",
-            "confidence_score": 0.0,
-            "orthography": "none",
+            "hmar_confidence": 0.0,
+            "detected_language_confidence": 0.0,
             "mode": self.mode,
             "scores": {
                 "casual_hmar_ratio": 0.0,
                 "formal_hmar_ratio": 0.0,
                 "english_stopword_ratio": 0.0,
+                "sibling_zo_stopword_ratio": 0.0,
+                "unknown_words_ratio": 0.0,
                 "total_words": 0,
                 "hmar_words_count": 0,
                 "non_hmar_words_count": 0,
+                "unknown_words_count": 0,
                 "english_stopwords_count": 0,
-                "diacritic_words_count": 0,
+                "sibling_zo_stopwords_count": 0,
+                "hmar_diacritic_words_count": 0,
+                "non_hmar_diacritic_words_count": 0,
+                "total_diacritic_words_count": 0,
             },
         }
 
@@ -385,8 +383,7 @@ def get_default_detector() -> Detector:
 
 def detect(
     text_or_tokens: Union[str, List[str]],
-    mode: str = "basic",
-    return_tokens: bool = False
+    mode: str = "basic"
 ) -> Dict[str, Any]:
     """
     Top-level helper function to detect language of a text string OR pre-tokenized list of word tokens.
@@ -397,6 +394,6 @@ def detect(
     'hmar'
     """
     if mode == "basic":
-        return get_default_detector().detect(text_or_tokens, return_tokens=return_tokens)
+        return get_default_detector().detect(text_or_tokens)
     detector = Detector(mode=mode)
-    return detector.detect(text_or_tokens, return_tokens=return_tokens)
+    return detector.detect(text_or_tokens)

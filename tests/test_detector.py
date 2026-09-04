@@ -12,19 +12,39 @@ class TestHmaraniam(unittest.TestCase):
         sample_text = "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu lien lema intel le insung khawm a nih."
         res = detect(sample_text, mode="basic")
         self.assertEqual(res["language"], "hmar")
-        self.assertGreaterEqual(res["confidence_score"], 0.70)
+        self.assertGreaterEqual(res["hmar_confidence"], 0.70)
+        self.assertGreaterEqual(res["detected_language_confidence"], 0.70)
         self.assertIn("casual_hmar_ratio", res["scores"])
+        self.assertIn("formal_hmar_ratio", res["scores"])
         self.assertIn("non_hmar_words_count", res["scores"])
+
+    def test_formal_diacritic_scores(self):
+        sample_text = "Pathien a ṭha, ama chun thil thangkhat a thaw â."
+        res = detect(sample_text)
+        self.assertEqual(res["language"], "hmar")
+        self.assertGreater(res["scores"]["hmar_diacritic_words_count"], 0)
+        self.assertEqual(res["scores"]["non_hmar_diacritic_words_count"], 0)
+        self.assertGreater(res["scores"]["total_diacritic_words_count"], 0)
+        self.assertGreater(res["scores"]["formal_hmar_ratio"], 0.0)
+
+    def test_non_hmar_diacritic_isolation(self):
+        # "rôle" and "château" are French words with circumflexes, NOT Hmar words
+        sample_text = "This official document details the rôle and status of the château for all members."
+        res = detect(sample_text)
+        self.assertEqual(res["language"], "english")
+        # Ensure non-Hmar diacritic words are separated into non_hmar_diacritic_words_count
+        self.assertEqual(res["scores"]["hmar_diacritic_words_count"], 0)
+        self.assertEqual(res["scores"]["non_hmar_diacritic_words_count"], 2)
+        self.assertEqual(res["scores"]["total_diacritic_words_count"], 2)
 
     def test_pre_tokenized_list_input(self):
         # 1 word per item in pre-tokenized list (evaluated "as is")
         tokens = ["khawvel", "fe", "dan", "phung", "ei", "en", "chun"]
-        res = detect(tokens, return_tokens=True)
+        res = detect(tokens)
         self.assertEqual(res["language"], "hmar")
         self.assertEqual(res["scores"]["total_words"], 7)
-        self.assertIn("tokens", res)
-        self.assertEqual(len(res["tokens"]), 7)
-        self.assertTrue(res["tokens"][0]["is_hmar"])
+        self.assertEqual(res["scores"]["hmar_words_count"], 7)
+        self.assertEqual(res["scores"]["non_hmar_words_count"], 0)
 
     def test_hmar_detection_high_mode(self):
         sample_text = "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu lien lema intel le insung khawm a nih."
@@ -38,11 +58,14 @@ class TestHmaraniam(unittest.TestCase):
         res = detect(sample_text)
         self.assertEqual(res["language"], "english")
         self.assertGreater(res["scores"]["english_stopword_ratio"], 0.03)
+        self.assertGreater(res["detected_language_confidence"], 0.50)
+        self.assertLess(res["hmar_confidence"], 0.20)
 
     def test_empty_input(self):
         res = detect("")
         self.assertEqual(res["language"], "unknown")
-        self.assertEqual(res["confidence_score"], 0.0)
+        self.assertEqual(res["hmar_confidence"], 0.0)
+        self.assertEqual(res["detected_language_confidence"], 0.0)
         self.assertEqual(res["scores"]["total_words"], 0)
 
     def test_custom_unigrams(self):
