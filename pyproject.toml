@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hmaraniam"
+version = "0.1.0"
+description = "High-precision language identification library for Hmar ('Hmar a ni am?')"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [
+    { name = "Hmar Heritage Project", email = "info@hmarheritage.org" }
+]
+keywords = [
+    "hmar",
+    "language-identification",
+    "nlp",
+    "kuki-chin",
+    "zo-languages",
+    "language-detection",
+    "hmaraniam"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic"
+]
+
+[project.urls]
+Homepage = "https://github.com/hmar-heritage-org/hmaraniam"
+Repository = "https://github.com/hmar-heritage-org/hmaraniam"
+"Bug Tracker" = "https://github.com/hmar-heritage-org/hmaraniam/issues"
+
+[tool.setuptools.package-data]
+hmaraniam = ["data/*.json"]
