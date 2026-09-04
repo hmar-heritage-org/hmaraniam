@@ -41,4 +41,4 @@ Repository = "https://github.com/hmar-heritage-org/hmaraniam"
 "Bug Tracker" = "https://github.com/hmar-heritage-org/hmaraniam/issues"
 
 [tool.setuptools.package-data]
-hmaraniam = ["data/*.json"]
+hmaraniam = ["data/*.json", "data/shards/*.json"]

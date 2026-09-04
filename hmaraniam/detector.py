@@ -11,15 +11,15 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-# CDN Source of Truth
-DEFAULT_CDN_URL = "https://cdn.jsdelivr.net/gh/hmar-heritage-org/hmaraniam@main/hmaraniam/data/unigrams.json"
+# CDN Base URL for sharded dataset
+DEFAULT_CDN_BASE_URL = "https://cdn.jsdelivr.net/gh/hmar-heritage-org/hmaraniam@main/hmaraniam/data/shards/"
 CACHE_DIR = Path.home() / ".cache" / "hmaraniam"
-CACHE_FILE = CACHE_DIR / "unigrams.json"
+CACHE_SHARDS_DIR = CACHE_DIR / "shards"
 CACHE_META = CACHE_DIR / "cache_meta.json"
 
 # Package bundled data paths
 PACKAGE_DIR = Path(__file__).parent
-BUNDLED_UNIGRAMS = PACKAGE_DIR / "data" / "unigrams.json"
+BUNDLED_SHARDS_DIR = PACKAGE_DIR / "data" / "shards"
 BUNDLED_STOPWORDS = PACKAGE_DIR / "data" / "stopwords.json"
 
 
@@ -33,7 +33,8 @@ class Detector:
 
     def __init__(
         self,
-        cdn_url: Optional[str] = None,
+        mode: str = "basic",  # "basic" (core set 001) or "high" (all shards set_*.json)
+        cdn_base_url: Optional[str] = None,
         cache_ttl: int = 86400,  # 24 hours in seconds
         force_remote: bool = False,
         offline_only: bool = False,
@@ -41,12 +42,17 @@ class Detector:
         """
         Initialize Detector.
 
-        :param cdn_url: Optional custom CDN URL for remote unigrams dataset.
+        :param mode: Detection mode - "basic" (fast ~30k core unigrams) or "high" (all unigram shards).
+        :param cdn_base_url: Optional custom CDN base URL for remote unigram shards.
         :param cache_ttl: Time-to-live for local cache in seconds (default: 24h).
         :param force_remote: Force redownload from CDN on initialization.
         :param offline_only: Disable network calls and use local cache/bundled data only.
         """
-        self.cdn_url = cdn_url or DEFAULT_CDN_URL
+        self.mode = mode.lower()
+        if self.mode not in ["basic", "high"]:
+            raise ValueError("Invalid mode. Choose either 'basic' or 'high'.")
+
+        self.cdn_base_url = (cdn_base_url or DEFAULT_CDN_BASE_URL).rstrip("/") + "/"
         self.cache_ttl = cache_ttl
         self.offline_only = offline_only
 
@@ -54,7 +60,7 @@ class Detector:
         self.english_stopwords: set = set()
 
         self._load_stopwords()
-        self._load_unigrams(force_remote=force_remote)
+        self._load_unigram_shards(force_remote=force_remote)
 
     def _load_stopwords(self) -> None:
         """Load English stopwords from bundled data."""
@@ -62,42 +68,78 @@ class Detector:
             with open(BUNDLED_STOPWORDS, "r", encoding="utf-8") as f:
                 self.english_stopwords = set(json.load(f))
         else:
-            # Fallback basic stopwords
             self.english_stopwords = {
-                "the", "and", "of", "to", "is", "that", "for", "was", "with", 
-                "they", "have", "from", "had", "by", "but", "what", "there", "we"
+                "the", "and", "that", "for", "was", "with", "they", "have", 
+                "from", "had", "by", "but", "what", "there", "were", "your"
             }
 
-    def _load_unigrams(self, force_remote: bool = False) -> None:
-        """Load Hmar unigrams vocabulary using remote CDN, cache, or bundled fallback."""
+    def _get_shard_filenames(self) -> List[str]:
+        """Determine which shard filenames to load based on mode."""
+        if self.mode == "basic":
+            return ["unigrams_set_001.json"]
+
+        # For "high" mode, dynamically discover all unigrams_set_*.json in bundled or cached dir
+        shard_names = set()
+        if BUNDLED_SHARDS_DIR.exists():
+            for p in BUNDLED_SHARDS_DIR.glob("unigrams_set_*.json"):
+                shard_names.add(p.name)
+
+        if CACHE_SHARDS_DIR.exists():
+            for p in CACHE_SHARDS_DIR.glob("unigrams_set_*.json"):
+                shard_names.add(p.name)
+
+        if not shard_names:
+            shard_names = {"unigrams_set_001.json"}
+
+        return sorted(list(shard_names))
+
+    def _load_unigram_shards(self, force_remote: bool = False) -> None:
+        """Load Hmar unigrams vocabulary from shards based on current mode."""
+        shard_filenames = self._get_shard_filenames()
+        accumulated_words = set()
+
+        for shard_name in shard_filenames:
+            words = self._load_single_shard(shard_name, force_remote=force_remote)
+            if words:
+                accumulated_words.update(words)
+
+        if accumulated_words:
+            self.hmar_vocab = {w.lower() for w in accumulated_words}
+        else:
+            raise RuntimeError("Failed to load any Hmar unigram shards.")
+
+    def _load_single_shard(self, shard_name: str, force_remote: bool = False) -> Optional[List[str]]:
+        """Load a single unigram shard using CDN, cache, or bundled fallback."""
+        cache_path = CACHE_SHARDS_DIR / shard_name
+        bundled_path = BUNDLED_SHARDS_DIR / shard_name
         loaded_data: Optional[List[str]] = None
 
-        # 1. Try Remote CDN if network enabled and (force_remote or cache expired)
+        # 1. Try Remote CDN if network enabled
         if not self.offline_only:
-            if force_remote or self._should_fetch_remote():
-                loaded_data = self._fetch_from_cdn()
+            if force_remote or self._should_fetch_remote(cache_path):
+                loaded_data = self._fetch_shard_from_cdn(shard_name, cache_path)
 
         # 2. Try Local Cache if CDN fetch didn't happen or failed
-        if loaded_data is None and CACHE_FILE.exists():
+        if loaded_data is None and cache_path.exists():
             try:
-                with open(CACHE_FILE, "r", encoding="utf-8") as f:
+                with open(cache_path, "r", encoding="utf-8") as f:
                     loaded_data = json.load(f)
             except Exception:
                 loaded_data = None
 
-        # 3. Fallback to package bundled unigrams data
-        if loaded_data is None and BUNDLED_UNIGRAMS.exists():
-            with open(BUNDLED_UNIGRAMS, "r", encoding="utf-8") as f:
-                loaded_data = json.load(f)
+        # 3. Fallback to package bundled shards
+        if loaded_data is None and bundled_path.exists():
+            try:
+                with open(bundled_path, "r", encoding="utf-8") as f:
+                    loaded_data = json.load(f)
+            except Exception:
+                loaded_data = None
 
-        if loaded_data:
-            self.hmar_vocab = {word.lower() for word in loaded_data}
-        else:
-            raise RuntimeError("Failed to load Hmar unigrams data from CDN, cache, or bundled assets.")
+        return loaded_data
 
-    def _should_fetch_remote(self) -> bool:
-        """Check if local cache is missing or older than cache_ttl."""
-        if not CACHE_FILE.exists() or not CACHE_META.exists():
+    def _should_fetch_remote(self, cache_path: Path) -> bool:
+        """Check if local cache shard is missing or older than cache_ttl."""
+        if not cache_path.exists() or not CACHE_META.exists():
             return True
         try:
             with open(CACHE_META, "r", encoding="utf-8") as f:
@@ -107,11 +149,12 @@ class Detector:
         except Exception:
             return True
 
-    def _fetch_from_cdn(self) -> Optional[List[str]]:
-        """Fetch latest unigrams dataset from CDN and save to local disk cache."""
+    def _fetch_shard_from_cdn(self, shard_name: str, cache_path: Path) -> Optional[List[str]]:
+        """Fetch a specific shard file from CDN and cache it locally."""
         try:
+            cdn_url = self.cdn_base_url + shard_name
             req = urllib.request.Request(
-                self.cdn_url,
+                cdn_url,
                 headers={"User-Agent": "hmaraniam-detector/0.1.0"}
             )
             with urllib.request.urlopen(req, timeout=3.0) as resp:
@@ -119,13 +162,12 @@ class Detector:
                     raw_content = resp.read().decode("utf-8")
                     data = json.loads(raw_content)
 
-                    # Save to local cache asynchronously/safely
-                    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-                    with open(CACHE_FILE, "w", encoding="utf-8") as f:
+                    CACHE_SHARDS_DIR.mkdir(parents=True, exist_ok=True)
+                    with open(cache_path, "w", encoding="utf-8") as f:
                         f.write(raw_content)
 
                     with open(CACHE_META, "w", encoding="utf-8") as f:
-                        json.dump({"fetched_at": time.time(), "source": self.cdn_url}, f)
+                        json.dump({"fetched_at": time.time(), "source": cdn_url}, f)
 
                     return data
         except Exception:
@@ -143,6 +185,7 @@ class Detector:
             return {
                 "language": "unknown",
                 "confidence": "uncertain",
+                "mode": self.mode,
                 "scores": {
                     "hmar_ratio": 0.0,
                     "english_stopword_ratio": 0.0,
@@ -152,7 +195,6 @@ class Detector:
                 },
             }
 
-        # Tokenize text into words (supporting Latin and Unicode diacritics)
         words = [w.lower() for w in re.findall(r"\b[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF]+\b", text)]
         total_words = len(words)
 
@@ -160,6 +202,7 @@ class Detector:
             return {
                 "language": "unknown",
                 "confidence": "uncertain",
+                "mode": self.mode,
                 "scores": {
                     "hmar_ratio": 0.0,
                     "english_stopword_ratio": 0.0,
@@ -189,7 +232,6 @@ class Detector:
             language = "other"  # Mizo, Kuki, Paite, or unclassified
             confidence = "likely"
         else:
-            # Code-switched / mixed text
             if hmar_ratio >= 0.40 or hmar_ratio > eng_stop_ratio * 5:
                 language = "hmar"
                 confidence = "likely"
@@ -203,6 +245,7 @@ class Detector:
         return {
             "language": language,
             "confidence": confidence,
+            "mode": self.mode,
             "scores": {
                 "hmar_ratio": round(hmar_ratio, 4),
                 "english_stopword_ratio": round(eng_stop_ratio, 4),
@@ -237,11 +280,11 @@ def get_default_detector() -> Detector:
     """Retrieve or initialize global default Detector instance."""
     global _default_detector
     if _default_detector is None:
-        _default_detector = Detector()
+        _default_detector = Detector(mode="basic")
     return _default_detector
 
 
-def detect(text: str) -> Dict[str, Any]:
+def detect(text: str, mode: str = "basic") -> Dict[str, Any]:
     """
     Top-level helper function to detect language of a text string.
 
@@ -250,11 +293,14 @@ def detect(text: str) -> Dict[str, Any]:
     >>> res["language"]
     'hmar'
     """
-    return get_default_detector().detect(text)
+    if mode == "basic":
+        return get_default_detector().detect(text)
+    detector = Detector(mode=mode)
+    return detector.detect(text)
 
 
-def detect_file(filepath: Union[str, Path]) -> Dict[str, Any]:
+def detect_file(filepath: Union[str, Path], mode: str = "basic") -> Dict[str, Any]:
     """Helper function to read a text file and detect its language."""
     path = Path(filepath)
     text = path.read_text(encoding="utf-8", errors="ignore")
-    return detect(text)
+    return detect(text, mode=mode)

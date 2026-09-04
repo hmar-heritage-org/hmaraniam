@@ -1,5 +1,5 @@
 """
-Unit tests for hmaraniam detector.
+Unit tests for hmaraniam detector with sharding support.
 """
 
 import unittest
@@ -8,12 +8,20 @@ from hmaraniam import Detector, detect
 
 class TestHmaraniam(unittest.TestCase):
 
-    def test_hmar_detection(self):
+    def test_hmar_detection_basic(self):
         sample_text = "Tuking chanchinbu a hung suok tlangval a nih. Inpui le Virthli thuthang."
-        res = detect(sample_text)
+        res = detect(sample_text, mode="basic")
         self.assertEqual(res["language"], "hmar")
+        self.assertEqual(res["mode"], "basic")
         self.assertIn(res["confidence"], ["definitely", "likely"])
         self.assertGreater(res["scores"]["hmar_ratio"], 0.5)
+
+    def test_hmar_detection_high_mode(self):
+        sample_text = "Tuking chanchinbu a hung suok tlangval a nih. Inpui le Virthli thuthang."
+        detector = Detector(mode="high", offline_only=True)
+        res = detector.detect(sample_text)
+        self.assertEqual(res["language"], "hmar")
+        self.assertEqual(res["mode"], "high")
 
     def test_english_detection(self):
         sample_text = "The quick brown fox jumps over the lazy dog. This is an official notice and document for the public."
