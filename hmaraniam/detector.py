@@ -50,7 +50,9 @@ class Detector:
         """
         self.mode = mode.lower()
         if self.mode not in ["basic", "high"]:
-            raise ValueError("Invalid mode. Choose either 'basic' or 'high'.")
+            raise ValueError(
+                f"Invalid detection mode '{mode}'. Supported modes are 'basic' (default) and 'high' (extended dataset)."
+            )
 
         self.cdn_base_url = (cdn_base_url or DEFAULT_CDN_BASE_URL).rstrip("/") + "/"
         self.cache_ttl = cache_ttl
@@ -181,6 +183,9 @@ class Detector:
         :param text: Input text to classify.
         :return: Structured result dict containing language label, confidence, and score breakdown.
         """
+        if not isinstance(text, str):
+            raise TypeError(f"Expected text input to be a string, got {type(text).__name__}")
+
         if not text or not text.strip():
             return {
                 "language": "unknown",
@@ -331,6 +336,9 @@ def detect_html(raw_html: str, mode: str = "basic") -> Dict[str, Any]:
 def detect_file(filepath: Union[str, Path], mode: str = "basic") -> Dict[str, Any]:
     """Helper function to read a text file and detect its language."""
     path = Path(filepath)
+    if not path.exists() or not path.is_file():
+        raise FileNotFoundError(f"Target file does not exist or is not a valid file: '{filepath}'")
+
     text = path.read_text(encoding="utf-8", errors="ignore")
     if path.suffix.lower() in [".html", ".htm", ".xhtml"]:
         return detect_html(text, mode=mode)

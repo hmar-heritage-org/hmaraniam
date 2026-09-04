@@ -15,7 +15,7 @@
 - **Linguistically Aware:** Anchored on a curated 30,600+ surface word Hmar unigram vocabulary and core Hmar grammar particles (`ruokchu`, `popah`, `haiin`, `naw`, `chun`, `tlat`).
 - **Granular Classification:** Provides 3-way language labeling (`hmar`, `english`, `other`), confidence ratings (`definitely`, `likely`, `uncertain`), and match ratios.
 - **HTML & URL Aware:** Built-in `detect_html()` strips scripts, styles, and tags, while automatically filtering URLs/emails before tokenization.
-- **Flexible Detection Modes:** Supports `mode="basic"` (fast core ~30k vocabulary) and `mode="high"` (exhaustive sharded vocabulary).
+- **Flexible Detection Modes:** Supports `mode="basic"` (active default core ~30k vocabulary) and `mode="high"` (auto-discovers all extended dataset shards, falling back seamlessly to basic).
 
 ---
 
@@ -104,14 +104,42 @@ for p in paragraphs:
 ```python
 from hmaraniam import Detector
 
-# Basic Mode (Fast ~30k core unigrams - Default)
+# Basic Mode (Active default ~30k core unigrams)
 basic_detector = Detector(mode="basic")
 
-# High Mode (Loads all dataset shards for deep scanning)
+# High Mode (Scans data/shards/ and loads all available unigram shards, falling back seamlessly to basic)
 high_detector = Detector(mode="high")
 
 # Offline-only mode (uses cached/bundled dataset without network calls)
 offline_detector = Detector(offline_only=True)
+```
+
+---
+
+## Error Handling
+
+`hmaraniam` provides clear, descriptive error messages:
+
+```python
+import hmaraniam
+
+# Raises ValueError for unsupported modes
+try:
+    hmaraniam.detect("Text", mode="ultra")
+except ValueError as e:
+    print(e) # "Invalid detection mode 'ultra'. Supported modes are 'basic' (default) and 'high'."
+
+# Raises TypeError for non-string input
+try:
+    hmaraniam.detect(12345)
+except TypeError as e:
+    print(e) # "Expected text input to be a string, got int"
+
+# Raises FileNotFoundError for missing files
+try:
+    hmaraniam.detect_file("non_existent.html")
+except FileNotFoundError as e:
+    print(e) # "Target file does not exist or is not a valid file: 'non_existent.html'"
 ```
 
 ---

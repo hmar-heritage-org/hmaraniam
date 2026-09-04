@@ -1,9 +1,9 @@
 """
-Unit tests for hmaraniam detector with HTML and sharding support.
+Unit tests for hmaraniam detector with error handling, HTML, and sharding support.
 """
 
 import unittest
-from hmaraniam import Detector, detect, detect_html
+from hmaraniam import Detector, detect, detect_file, detect_html
 
 
 class TestHmaraniam(unittest.TestCase):
@@ -50,6 +50,16 @@ class TestHmaraniam(unittest.TestCase):
         self.assertEqual(res["language"], "unknown")
         self.assertEqual(res["confidence"], "uncertain")
         self.assertEqual(res["scores"]["total_words"], 0)
+
+    def test_error_handling(self):
+        with self.assertRaises(ValueError):
+            Detector(mode="invalid_mode")
+
+        with self.assertRaises(TypeError):
+            detect(12345)  # type: ignore
+
+        with self.assertRaises(FileNotFoundError):
+            detect_file("non_existent_file_path_xyz.html")
 
     def test_detector_offline_mode(self):
         detector = Detector(offline_only=True)
