@@ -5,7 +5,6 @@ hmaraniam - High-precision language identification for Hmar.
 
 from hmaraniam.detector import (
     Detector,
-    acp_pradyuman,
     detect,
     detect_file,
     detect_html,
@@ -21,7 +20,6 @@ __all__ = [
     "detect",
     "detect_file",
     "detect_html",
-    "acp_pradyuman",
     "get_default_detector",
     "__version__",
 ]

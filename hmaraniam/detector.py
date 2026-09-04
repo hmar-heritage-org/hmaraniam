@@ -343,17 +343,3 @@ def detect_file(filepath: Union[str, Path], mode: str = "basic") -> Dict[str, An
     if path.suffix.lower() in [".html", ".htm", ".xhtml"]:
         return detect_html(text, mode=mode)
     return detect(text, mode=mode)
-
-
-def acp_pradyuman(text_or_file: str, mode: str = "basic") -> Dict[str, Any]:
-    """
-    ACP Pradyuman - "Daya, kuch toh gadbad hai! Pata karo yeh text Hmar hai ya nahi!"
-    
-    Convenience function that detects text, HTML, or filepath automatically.
-    """
-    if isinstance(text_or_file, str) and (text_or_file.endswith(".html") or text_or_file.endswith(".txt")):
-        if Path(text_or_file).exists():
-            return detect_file(text_or_file, mode=mode)
-    if "<html" in text_or_file.lower() or "<body" in text_or_file.lower():
-        return detect_html(text_or_file, mode=mode)
-    return detect(text_or_file, mode=mode)
