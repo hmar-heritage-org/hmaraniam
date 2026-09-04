@@ -176,21 +176,21 @@ class Detector:
         eng_stop_ratio = eng_stop_matches / total_words
 
         # Classification & Confidence Logic
-        if hmar_ratio >= 0.70 and eng_stop_ratio < 0.01:
+        if hmar_ratio >= 0.65:
             language = "hmar"
-            confidence = "definitely"
+            confidence = "definitely" if hmar_ratio >= 0.75 else "likely"
         elif hmar_ratio >= 0.45 and eng_stop_ratio < 0.025:
             language = "hmar"
             confidence = "likely"
-        elif eng_stop_ratio >= 0.03 and hmar_ratio < 0.40:
+        elif eng_stop_ratio >= 0.025 and hmar_ratio < 0.40:
             language = "english"
-            confidence = "definitely" if eng_stop_ratio >= 0.05 else "likely"
+            confidence = "definitely" if eng_stop_ratio >= 0.04 else "likely"
         elif hmar_ratio < 0.40 and eng_stop_ratio < 0.02:
             language = "other"  # Mizo, Kuki, Paite, or unclassified
             confidence = "likely"
         else:
             # Code-switched / mixed text
-            if hmar_ratio > eng_stop_ratio * 10:
+            if hmar_ratio >= 0.40 or hmar_ratio > eng_stop_ratio * 5:
                 language = "hmar"
                 confidence = "likely"
             elif eng_stop_ratio > 0.02:
