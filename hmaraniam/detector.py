@@ -12,14 +12,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 # CDN Source of Truth
-DEFAULT_CDN_URL = "https://cdn.jsdelivr.net/gh/hmar-heritage-org/hmaraniam@main/hmaraniam/data/hmar_unigrams.json"
+DEFAULT_CDN_URL = "https://cdn.jsdelivr.net/gh/hmar-heritage-org/hmaraniam@main/hmaraniam/data/unigrams.json"
 CACHE_DIR = Path.home() / ".cache" / "hmaraniam"
-CACHE_FILE = CACHE_DIR / "hmar_unigrams.json"
+CACHE_FILE = CACHE_DIR / "unigrams.json"
 CACHE_META = CACHE_DIR / "cache_meta.json"
 
 # Package bundled data paths
 PACKAGE_DIR = Path(__file__).parent
-BUNDLED_UNIGRAMS = PACKAGE_DIR / "data" / "hmar_unigrams.json"
+BUNDLED_UNIGRAMS = PACKAGE_DIR / "data" / "unigrams.json"
 BUNDLED_STOPWORDS = PACKAGE_DIR / "data" / "stopwords.json"
 
 
