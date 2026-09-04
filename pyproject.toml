@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hmaraniam"
-version = "0.1.0"
+version = "0.1.1"
 description = "High-precision language identification library for Hmar ('Hmar a ni am?')"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -40,5 +40,9 @@ Homepage = "https://github.com/hmar-heritage-org/hmaraniam"
 Repository = "https://github.com/hmar-heritage-org/hmaraniam"
 "Bug Tracker" = "https://github.com/hmar-heritage-org/hmaraniam/issues"
 
+[project.scripts]
+hmaraniam = "hmaraniam.__main__:main"
+
 [tool.setuptools.package-data]
 hmaraniam = ["data/*.json", "data/shards/*.json"]
+
