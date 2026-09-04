@@ -195,7 +195,11 @@ class Detector:
                 },
             }
 
-        words = [w.lower() for w in re.findall(r"\b[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF]+\b", text)]
+        # Strip URLs and email addresses before tokenization
+        cleaned_text = re.sub(r"https?://\S+|www\.\S+", " ", text)
+        cleaned_text = re.sub(r"\b[\w\.-]+@[\w\.-]+\.\w+\b", " ", cleaned_text)
+
+        words = [w.lower() for w in re.findall(r"\b[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF]+\b", cleaned_text)]
         total_words = len(words)
 
         if total_words == 0:
@@ -255,6 +259,23 @@ class Detector:
             },
         }
 
+    def detect_html(self, raw_html: str) -> Dict[str, Any]:
+        """
+        Extract clean body text from raw HTML and detect language.
+
+        :param raw_html: Raw HTML string.
+        :return: Structured result dict.
+        """
+        if not raw_html:
+            return self.detect("")
+
+        # Strip HTML comments, scripts, styles, and tags
+        text = re.sub(r"<!--.*?-->", " ", raw_html, flags=re.DOTALL)
+        text = re.sub(r"<script.*?>.*?</script>", " ", text, flags=re.DOTALL | re.IGNORECASE)
+        text = re.sub(r"<style.*?>.*?</style>", " ", text, flags=re.DOTALL | re.IGNORECASE)
+        text = re.sub(r"<[^>]+>", " ", text)
+        return self.detect(text.strip())
+
     def detect_paragraphs(self, text: str) -> List[Dict[str, Any]]:
         """
         Split text into paragraphs and classify each paragraph independently.
@@ -299,8 +320,18 @@ def detect(text: str, mode: str = "basic") -> Dict[str, Any]:
     return detector.detect(text)
 
 
+def detect_html(raw_html: str, mode: str = "basic") -> Dict[str, Any]:
+    """Top-level helper function to extract text from HTML and detect language."""
+    if mode == "basic":
+        return get_default_detector().detect_html(raw_html)
+    detector = Detector(mode=mode)
+    return detector.detect_html(raw_html)
+
+
 def detect_file(filepath: Union[str, Path], mode: str = "basic") -> Dict[str, Any]:
     """Helper function to read a text file and detect its language."""
     path = Path(filepath)
     text = path.read_text(encoding="utf-8", errors="ignore")
+    if path.suffix.lower() in [".html", ".htm", ".xhtml"]:
+        return detect_html(text, mode=mode)
     return detect(text, mode=mode)

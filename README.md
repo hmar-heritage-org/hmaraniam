@@ -32,7 +32,7 @@ pip install hmaraniam
 ```python
 import hmaraniam
 
-result = hmaraniam.detect("Tuking chanchinbu a hung suok tlangval a nih.")
+result = hmaraniam.detect("Iemata bu fak a ka hung ding itia i hung nawk ta naw a?")
 
 print(result)
 # Output:
