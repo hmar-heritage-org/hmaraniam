@@ -34,7 +34,10 @@ pip install hmaraniam
 ```python
 import hmaraniam
 
-result = hmaraniam.detect("Tuking chanchinbu a hung suok tlangval a nih.")
+# Authentic text from L. Keivom collection
+sample_text = "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu lien lema intel le insung khawm a nih."
+
+result = hmaraniam.detect(sample_text)
 
 print(result)
 # Output:
@@ -43,10 +46,10 @@ print(result)
 #     "confidence": "definitely",
 #     "mode": "basic",
 #     "scores": {
-#         "hmar_ratio": 0.875,
+#         "hmar_ratio": 0.8421,
 #         "english_stopword_ratio": 0.0,
-#         "total_words": 8,
-#         "hmar_matches": 7,
+#         "total_words": 19,
+#         "hmar_matches": 16,
 #         "english_stop_matches": 0
 #     }
 # }

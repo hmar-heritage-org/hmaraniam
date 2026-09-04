@@ -9,7 +9,8 @@ from hmaraniam import Detector, detect
 class TestHmaraniam(unittest.TestCase):
 
     def test_hmar_detection_basic(self):
-        sample_text = "Tuking chanchinbu a hung suok tlangval a nih. Inpui le Virthli thuthang."
+        # Authentic text from L. Keivom collection
+        sample_text = "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu lien lema intel le insung khawm a nih."
         res = detect(sample_text, mode="basic")
         self.assertEqual(res["language"], "hmar")
         self.assertEqual(res["mode"], "basic")
@@ -17,7 +18,8 @@ class TestHmaraniam(unittest.TestCase):
         self.assertGreater(res["scores"]["hmar_ratio"], 0.5)
 
     def test_hmar_detection_high_mode(self):
-        sample_text = "Tuking chanchinbu a hung suok tlangval a nih. Inpui le Virthli thuthang."
+        # Authentic text from L. Keivom collection
+        sample_text = "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu lien lema intel le insung khawm a nih."
         detector = Detector(mode="high", offline_only=True)
         res = detector.detect(sample_text)
         self.assertEqual(res["language"], "hmar")
