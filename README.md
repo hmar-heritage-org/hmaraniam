@@ -24,6 +24,7 @@
 - **Language ID vs. Spell Correction:** `hmaraniam` measures vocabulary identity (*"Is this text Hmar?"*). It is not a spell checker and does not modify typos, character variants (acute `á`, grave `à`, circumflex `â`), or mobile keyboard codepoints (`ṭ` vs `ţ`).
 - **ASCII Normalization (`casual_hmar_ratio`):** Mobile keyboards produce varying accent codepoints. Stripping diacritics (`strip_diacritics`) allows consistent vocabulary evaluation across devices.
 - **1-Token-Per-Row Boundaries:** To evaluate hyphenated (`mithiem-hai`), spaced (`mithiem hai`), or compound (`mithiemhai`) terms directly, `hmaraniam` accepts 1-token-per-row inputs (JSON, CSV, TXT, Python lists) without re-tokenizing.
+- **Vocabulary Identity vs. Grammar:** `hmaraniam` measures dictionary presence and token overlap, not syntax or semantics. A random sequence of valid Hmar words yields a high vocabulary score regardless of grammatical structure.
 
 ---
 

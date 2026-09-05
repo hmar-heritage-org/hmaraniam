@@ -150,6 +150,10 @@ hmaraniam HELP: DESIGN & NORMALIZATION PRINCIPLES
 3. Deterministic 1-Token-Per-Row Boundaries:
    To avoid engine-level guessing on orthographic variants ("mithiem-hai" vs "mithiem hai"),
    1-token-per-row inputs (JSON, CSV, TXT, Python Lists) are evaluated 1:1 with zero internal mutation.
+
+4. Vocabulary Identity vs. Grammar:
+   hmaraniam measures dictionary presence and token overlap, not syntax or semantics.
+   A random sequence of valid Hmar words yields a high vocabulary score regardless of sentence structure.
 """,
 
     "integrate": """
