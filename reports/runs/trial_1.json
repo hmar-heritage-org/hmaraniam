@@ -55,7 +55,7 @@
         "avg_words": 9.86,
         "mean_hmar_conf": 0.378152,
         "mean_casual_ratio": 73.9842,
-        "stopword_hit_rate": 37.0,
+        "stopword_hit_rate": 49.0,
         "mean_unknown_ratio": 26.0158
       },
       "Mizo (OV)": {
@@ -66,7 +66,7 @@
         "avg_words": 9.29,
         "mean_hmar_conf": 0.290139,
         "mean_casual_ratio": 69.0509,
-        "stopword_hit_rate": 37.0,
+        "stopword_hit_rate": 56.00000000000001,
         "mean_unknown_ratio": 30.9491
       },
       "Paite (BSI)": {
@@ -167,7 +167,7 @@
         "avg_words": 20.725,
         "mean_hmar_conf": 0.43874,
         "mean_casual_ratio": 73.726125,
-        "stopword_hit_rate": 67.5,
+        "stopword_hit_rate": 78.75,
         "mean_unknown_ratio": 26.273874999999997
       },
       "Mizo (OV)": {
@@ -178,7 +178,7 @@
         "avg_words": 20.8125,
         "mean_hmar_conf": 0.2997025,
         "mean_casual_ratio": 68.39475,
-        "stopword_hit_rate": 58.75,
+        "stopword_hit_rate": 85.0,
         "mean_unknown_ratio": 31.605249999999995
       },
       "Paite (BSI)": {
@@ -279,7 +279,7 @@
         "avg_words": 73.1,
         "mean_hmar_conf": 0.41777749999999997,
         "mean_casual_ratio": 72.4115,
-        "stopword_hit_rate": 87.5,
+        "stopword_hit_rate": 97.5,
         "mean_unknown_ratio": 27.588500000000003
       },
       "Mizo (OV)": {
@@ -290,7 +290,7 @@
         "avg_words": 59.025,
         "mean_hmar_conf": 0.292675,
         "mean_casual_ratio": 68.67699999999999,
-        "stopword_hit_rate": 80.0,
+        "stopword_hit_rate": 95.0,
         "mean_unknown_ratio": 31.323
       },
       "Paite (BSI)": {
@@ -391,7 +391,7 @@
         "avg_words": 516.5243902439024,
         "mean_hmar_conf": 0.4854121951219512,
         "mean_casual_ratio": 74.61432926829269,
-        "stopword_hit_rate": 98.78048780487805,
+        "stopword_hit_rate": 100.0,
         "mean_unknown_ratio": 25.38569105691057
       },
       "Mizo (OV)": {
@@ -402,7 +402,7 @@
         "avg_words": 556.7154471544716,
         "mean_hmar_conf": 0.4689493902439024,
         "mean_casual_ratio": 74.09969512195121,
-        "stopword_hit_rate": 98.78048780487805,
+        "stopword_hit_rate": 100.0,
         "mean_unknown_ratio": 25.900284552845527
       },
       "Paite (BSI)": {
