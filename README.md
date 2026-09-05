@@ -222,3 +222,22 @@ except TypeError as e:
 ## License
 
 Published under the MIT License by the **Hmar Heritage Foundation**.
+
+---
+
+## Citation & Attribution
+
+If you use this software in your research or tools, please cite:
+
+```bibtex
+@software{hmaraniam_2026,
+  author       = {Hmar Heritage Foundation},
+  title        = {hmaraniam: Zero-dependency language identification library for Hmar},
+  year         = {2026},
+  publisher    = {PyPI / GitHub},
+  iso_code     = {hmr},
+  glottolog    = {hmar1241},
+  clade        = {Zo Languages},
+  howpublished = {\url{https://github.com/hmar-heritage-org/hmaraniam}}
+}
+```
