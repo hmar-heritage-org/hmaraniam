@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hmaraniam"
-version = "0.1.2"
+version = "0.1.3"
 description = "Zero-dependency language identification library for Hmar ('Hmar a ni am?')"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -42,6 +42,10 @@ Repository = "https://github.com/hmar-heritage-org/hmaraniam"
 
 [project.scripts]
 hmaraniam = "hmaraniam.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["hmaraniam*"]
 
 [tool.setuptools.package-data]
 hmaraniam = ["data/*.json", "data/shards/*.json"]
