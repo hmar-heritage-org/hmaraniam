@@ -67,8 +67,28 @@ import hmaraniam
 sample_text = "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu lien lema intel le insung khawm a nih."
 
 result = hmaraniam.detect(sample_text)
-
 print(result)
+```
+
+### Deterministic 1-Token-Per-Row Inputs (JSON, CSV, TXT, Python Lists)
+
+For high-precision NLP pipelines where exact token boundaries matter (e.g. distinguishing `"mithiem-hai"` vs `"mithiem hai"` vs `"mithiemhai"`), `hmaraniam` evaluates 1-token-per-row inputs with **zero internal guessing or re-tokenization**:
+
+```python
+import hmaraniam
+
+# 1. Python List (1 token per item)
+tokens = ["mithiem-hai", "pathien", "hnenah", "khawvel"]
+result = hmaraniam.detect(tokens)
+
+# 2. JSON Array File (e.g. tokens.json)
+result = hmaraniam.detect("path/to/tokens.json")
+
+# 3. Line-Delimited TXT File (1 token per line, e.g. tokens.txt)
+result = hmaraniam.detect("path/to/tokens.txt")
+
+# 4. CSV File (1 token per row, e.g. tokens.csv)
+result = hmaraniam.detect("path/to/tokens.csv")
 ```
 
 ### Custom Unigrams & Stopwords

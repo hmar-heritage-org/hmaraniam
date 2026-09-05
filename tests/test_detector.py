@@ -94,6 +94,36 @@ class TestHmaraniam(unittest.TestCase):
         self.assertEqual(paras[0]["language"], "hmar")
         self.assertEqual(paras[1]["language"], "english")
 
+    def test_hyphenated_token_preservation(self):
+        # Verify hyphenated tokens like 'mithiem-hai' are preserved as single tokens
+        tokens = ["mithiem-hai", "pathien", "hnenah", "khawvel"]
+        res = detect(tokens)
+        self.assertEqual(res["scores"]["total_words"], 4)
+
+    def test_deterministic_file_token_inputs(self):
+        import tempfile
+        import json
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmppath = Path(tmpdir)
+            
+            # JSON array file
+            json_file = tmppath / "tokens.json"
+            with open(json_file, "w", encoding="utf-8") as f:
+                json.dump(["khawvel", "fe", "dan", "phung", "ei", "en", "chun"], f)
+            res_json = detect(json_file)
+            self.assertEqual(res_json["language"], "hmar")
+            self.assertEqual(res_json["scores"]["total_words"], 7)
+
+            # TXT line-delimited file (1 token per row)
+            txt_file = tmppath / "tokens.txt"
+            with open(txt_file, "w", encoding="utf-8") as f:
+                f.write("khawvel\nfe\ndan\nphung\nei\nen\nchun\n")
+            res_txt = detect(txt_file)
+            self.assertEqual(res_txt["language"], "hmar")
+            self.assertEqual(res_txt["scores"]["total_words"], 7)
+
 
 if __name__ == "__main__":
     unittest.main()
+

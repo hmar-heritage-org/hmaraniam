@@ -34,6 +34,57 @@ def strip_diacritics(s: str) -> str:
     return "".join(c for c in unicodedata.normalize("NFD", s_norm) if unicodedata.category(c) != "Mn")
 
 
+def load_tokens(input_data: Union[str, List[str], Tuple[str, ...], Path]) -> List[str]:
+    """
+    Load clean, deterministic word tokens from structured inputs (JSON array, CSV, line-delimited TXT, or Python List).
+    Preserves exact token boundaries without internal guessing.
+    """
+    if isinstance(input_data, (list, tuple)):
+        # Pre-tokenized Python list (1 word per item - evaluated "as is")
+        return [str(w).lower().strip() for w in input_data if str(w).strip()]
+
+    if isinstance(input_data, (str, Path)):
+        # Check if input_data is a path to a file
+        p = Path(input_data)
+        if p.exists() and p.is_file():
+            if p.suffix == ".json":
+                with open(p, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                if isinstance(data, list):
+                    return [str(w).lower().strip() for w in data if str(w).strip()]
+            elif p.suffix == ".csv":
+                import csv
+                words = []
+                with open(p, "r", encoding="utf-8") as f:
+                    reader = csv.reader(f)
+                    for row in reader:
+                        if row:
+                            words.append(row[0].lower().strip())
+                # Drop header row if 'token' or 'word'
+                if words and words[0] in ["token", "word", "tokens", "words"]:
+                    words = words[1:]
+                return [w for w in words if w]
+            elif p.suffix == ".txt":
+                with open(p, "r", encoding="utf-8") as f:
+                    lines = f.readlines()
+                return [line.lower().strip() for line in lines if line.strip()]
+
+        # Line-delimited string (1 token per line)
+        if isinstance(input_data, str) and "\n" in input_data and not re.search(r"[ \t]", input_data.strip()):
+            lines = input_data.splitlines()
+            return [line.lower().strip() for line in lines if line.strip()]
+
+        # Fallback raw string processing
+        if not input_data or not str(input_data).strip():
+            return []
+
+        cleaned_text = re.sub(r"https?://\S+|www\.\S+", " ", str(input_data))
+        cleaned_text = re.sub(r"\b[\w\.-]+@[\w\.-]+\.\w+\b", " ", cleaned_text)
+        return [w.lower() for w in re.findall(r"\b[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF'-]+\b", cleaned_text)]
+
+    raise TypeError(f"Expected input to be a string, list of tokens, or file path, got {type(input_data).__name__}")
+
+
 class Detector:
     """
     Hmar Language Identification Detector Engine.
@@ -41,6 +92,7 @@ class Detector:
     Provides high-precision, dual-lens language detection for clean Hmar text strings,
     distinguishing Hmar from English and sibling Zo (Kuki-Chin) languages.
     """
+
 
     def __init__(
         self,
@@ -205,26 +257,14 @@ class Detector:
             pass
         return None
 
-    def detect(self, text_or_tokens: Union[str, List[str]]) -> Dict[str, Any]:
+    def detect(self, text_or_tokens: Union[str, List[str], Path]) -> Dict[str, Any]:
         """
-        Pure token or string language classification with standardized schema output.
+        Pure token, file, or string language classification with standardized schema output.
 
-        :param text_or_tokens: Clean text string OR pre-tokenized list of word tokens (1 word per item).
+        :param text_or_tokens: Pre-tokenized list of tokens, path to .json/.csv/.txt token file, or text string.
         :return: Standardized result dict.
         """
-        if isinstance(text_or_tokens, (list, tuple)):
-            # Pre-tokenized input (1 word per item - evaluated "as is")
-            words = [str(w).lower().strip() for w in text_or_tokens if str(w).strip()]
-        elif isinstance(text_or_tokens, str):
-            if not text_or_tokens or not text_or_tokens.strip():
-                return self._empty_result()
-            # Strip URLs and emails before tokenization
-            cleaned_text = re.sub(r"https?://\S+|www\.\S+", " ", text_or_tokens)
-            cleaned_text = re.sub(r"\b[\w\.-]+@[\w\.-]+\.\w+\b", " ", cleaned_text)
-            words = [w.lower() for w in re.findall(r"\b[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF]+\b", cleaned_text)]
-        else:
-            raise TypeError(f"Expected input to be a string or list of tokens, got {type(text_or_tokens).__name__}")
-
+        words = load_tokens(text_or_tokens)
         total_words = len(words)
         if total_words == 0:
             return self._empty_result()
