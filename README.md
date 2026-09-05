@@ -181,11 +181,11 @@ offline_detector = Detector(offline_only=True)
 
 ### Benchmarks & Reports
 
-Detailed empirical benchmark evaluations and multi-trial qualitative reports are maintained in the [`reports/`](https://github.com/hmar-heritage-org/hmaraniam/tree/main/reports) directory:
+Detailed empirical benchmark evaluations and multi-trial qualitative reports are maintained in the [`reports/`](./reports) directory in the codebase (*if reading this on PyPI, visit our [GitHub Repository](https://github.com/hmar-heritage-org/hmaraniam) to view the reports folder*):
 
-- **[Parallel Zo Bible Benchmark Report](https://github.com/hmar-heritage-org/hmaraniam/blob/main/reports/parallel_zo_bibles.md):** 10 Bible translations across 8 Zo languages + English. Achieves **100% precision** on Hmar (CLB & OV), Mizo, Paite, Thadou, and English.
-- **[Web Publisher Archives Evaluation Report](https://github.com/hmar-heritage-org/hmaraniam/blob/main/reports/web_archives.md):** Analysis of ~1,300 web documents across 5 publisher archives (*Keivom*, *Inpui*, *HSA*, *Hmarram*, *Virthli*).
-- **[Length Sensitivity & Multi-Trial Cross-Validation](https://github.com/hmar-heritage-org/hmaraniam/blob/main/reports/length_sensitivity.md):** Multi-trial evaluation across text length boundaries and chapter splits.
+- **Parallel Zo Bible Benchmark Report** (`reports/parallel_zo_bibles.md`): 10 Bible translations across 8 Zo languages + English. Achieves **100% precision** on Hmar (CLB & OV), Mizo, Paite, Thadou, and English.
+- **Web Publisher Archives Evaluation Report** (`reports/web_archives.md`): Analysis of ~1,300 web documents across 5 publisher archives (*Keivom*, *Inpui*, *HSA*, *Hmarram*, *Virthli*).
+- **Length Sensitivity & Multi-Trial Cross-Validation** (`reports/length_sensitivity.md`): Multi-trial evaluation across text length boundaries and chapter splits.
 
 
 ---
