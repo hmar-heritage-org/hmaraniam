@@ -78,25 +78,66 @@ result = hmaraniam.detect(sample_text)
 print(result)
 ```
 
-### Deterministic 1-Token-Per-Row Inputs (JSON, CSV, TXT, Python Lists)
+### Deterministic 1-Token-Per-Row Inputs (Recommended Gold Standard)
 
-For high-precision NLP pipelines where exact token boundaries matter (e.g. distinguishing `"mithiem-hai"` vs `"mithiem hai"` vs `"mithiemhai"`), `hmaraniam` evaluates 1-token-per-row inputs with **zero internal guessing or re-tokenization**:
+For high-precision NLP pipelines where exact token boundaries matter (e.g. distinguishing `"mithiem-hai"` vs `"mithiem hai"` vs `"mithiemhai"`), `hmaraniam` evaluates 1-token-per-row inputs with **zero internal engine guessing or re-tokenization**:
+
+#### Expected File Formats & Code Examples
+
+1. **JSON Array File (`tokens.json`):**
+   ```json
+   [
+     "khawvel",
+     "fe",
+     "dan",
+     "mithiem-hai",
+     "pathien",
+     "hnenah"
+   ]
+   ```
+   *Usage:* `hmaraniam.detect("tokens.json")` or CLI `hmaraniam tokens.json`
+
+2. **CSV File (`tokens.csv`):**
+   ```csv
+   token
+   khawvel
+   fe
+   dan
+   mithiem-hai
+   pathien
+   hnenah
+   ```
+   *Usage:* `hmaraniam.detect("tokens.csv")` or CLI `hmaraniam tokens.csv`
+
+3. **Line-Delimited TXT File (`tokens.txt` - 1 word per line):**
+   ```text
+   khawvel
+   fe
+   dan
+   mithiem-hai
+   pathien
+   hnenah
+   ```
+   *Usage:* `hmaraniam.detect("tokens.txt")` or CLI `hmaraniam tokens.txt`
+
+4. **Python List (`List[str]`):**
+   ```python
+   tokens = ["mithiem-hai", "pathien", "hnenah", "khawvel"]
+   result = hmaraniam.detect(tokens)
+   ```
+
+---
+
+### Non-Parsed Raw Text Documents (Convenience Fallback)
+
+For un-tokenized prose, web articles, or raw string inputs (`article.txt`, raw text string, or stdin pipe), `hmaraniam` automatically extracts word tokens using basic word-boundary regex matching:
 
 ```python
-import hmaraniam
+# Raw text string evaluation
+result = hmaraniam.detect("Khawvel fe dan phung ei en chun, ram le hnam damna thuruk...")
 
-# 1. Python List (1 token per item)
-tokens = ["mithiem-hai", "pathien", "hnenah", "khawvel"]
-result = hmaraniam.detect(tokens)
-
-# 2. JSON Array File (e.g. tokens.json)
-result = hmaraniam.detect("path/to/tokens.json")
-
-# 3. Line-Delimited TXT File (1 token per line, e.g. tokens.txt)
-result = hmaraniam.detect("path/to/tokens.txt")
-
-# 4. CSV File (1 token per row, e.g. tokens.csv)
-result = hmaraniam.detect("path/to/tokens.csv")
+# Raw text article file evaluation
+result = hmaraniam.detect("path/to/article.txt")
 ```
 
 ### Custom Unigrams & Stopwords

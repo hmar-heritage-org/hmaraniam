@@ -11,45 +11,65 @@ from hmaraniam import Detector, detect, __version__
 HELP_TOPICS = {
     "inputs": """
 ================================================================================
-hmaraniam HELP: INPUT FORMATS & DETERMINISTIC TOKEN BOUNDARIES
+hmaraniam HELP: INPUT FORMATS, CONCRETE EXAMPLES & BOUNDARIES
 ================================================================================
 
-To ensure 100% deterministic evaluation without engine-level guessing on compound
-words, hyphens, or plural suffixes (e.g., "mithiem-hai" vs "mithiem hai" vs "mithiemhai"),
-hmaraniam supports four 1-token-per-row input formats:
+hmaraniam distinguishes between DETERMINISTIC 1-TOKEN-PER-ROW INPUTS (Recommended)
+and NON-PARSED RAW TEXT DOCUMENTS (Convenience Fallback).
 
-1. JSON Array File (.json):
-   Pass a file containing a JSON array of token strings:
-   ["mithiem-hai", "pathien", "hnenah", "khawvel"]
+--------------------------------------------------------------------------------
+1. DETERMINISTIC 1-TOKEN-PER-ROW INPUTS (Recommended Gold Standard)
+--------------------------------------------------------------------------------
+Preserves exact token boundaries without internal engine guessing or re-tokenization.
+Ideal for distinguishing orthographic variants like "mithiem-hai" vs "mithiem hai".
 
-   Usage:
-     hmaraniam tokens.json
+A. JSON Array File (tokens.json):
+   [
+     "khawvel",
+     "fe",
+     "dan",
+     "mithiem-hai",
+     "pathien",
+     "hnenah"
+   ]
+   Usage: hmaraniam tokens.json
 
-2. Line-Delimited TXT File (.txt):
-   Pass a plain text file with 1 token per line:
+B. CSV File (tokens.csv):
+   token
+   khawvel
+   fe
+   dan
    mithiem-hai
    pathien
    hnenah
+   Usage: hmaraniam tokens.csv
 
-   Usage:
-     hmaraniam tokens.txt
-
-3. CSV File (.csv):
-   Pass a CSV file with 1 token per row (1st column or column named 'token'):
-   token
+C. Line-Delimited TXT File (tokens.txt - 1 word per line):
+   khawvel
+   fe
+   dan
    mithiem-hai
    pathien
+   hnenah
+   Usage: hmaraniam tokens.txt
 
-   Usage:
-     hmaraniam tokens.csv
+D. Python List / Set:
+   tokens = ["khawvel", "fe", "dan", "mithiem-hai"]
+   hmaraniam.detect(tokens)
 
-4. Stdin / Pipeline Stream:
-   Pipe a token stream directly into hmaraniam:
-   cat tokens.txt | hmaraniam
+--------------------------------------------------------------------------------
+2. NON-PARSED RAW TEXT DOCUMENTS (Convenience Fallback)
+--------------------------------------------------------------------------------
+For raw un-tokenized prose containing full sentences or multi-word lines, the engine
+extracts word tokens using basic word boundary regex matching.
 
-5. Raw String (Convenience Helper):
-   Pass a raw text string for quick ad-hoc testing:
+A. Raw Article File (article.txt):
+   Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu...
+   Usage: hmaraniam article.txt
+
+B. Raw Text String / Stdin Pipe:
    hmaraniam "Khawvel fe dan phung ei en chun..."
+   echo "Khawvel fe dan..." | hmaraniam
 """,
 
     "schema": """
