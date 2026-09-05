@@ -1,0 +1,454 @@
+{
+  "trial": 1,
+  "books_count": 22,
+  "metrics": {
+    "tier1_clause": {
+      "English (WEB)": {
+        "iso": "eng",
+        "target": "english",
+        "total_samples": 100,
+        "accuracy": 91.0,
+        "avg_words": 8.84,
+        "mean_hmar_conf": 0.0,
+        "mean_casual_ratio": 24.8363,
+        "stopword_hit_rate": 0.0,
+        "mean_unknown_ratio": 75.1637
+      },
+      "Gangte (BSI)": {
+        "iso": "gnb",
+        "target": "other",
+        "total_samples": 100,
+        "accuracy": 67.0,
+        "avg_words": 7.97,
+        "mean_hmar_conf": 0.19514900000000002,
+        "mean_casual_ratio": 61.833499999999994,
+        "stopword_hit_rate": 18.0,
+        "mean_unknown_ratio": 38.1665
+      },
+      "Hmar (CLB)": {
+        "iso": "hmr",
+        "target": "hmar",
+        "total_samples": 100,
+        "accuracy": 97.0,
+        "avg_words": 8.64,
+        "mean_hmar_conf": 0.66402,
+        "mean_casual_ratio": 94.5882,
+        "stopword_hit_rate": 4.0,
+        "mean_unknown_ratio": 5.4118
+      },
+      "Hmar (OV)": {
+        "iso": "hmr",
+        "target": "hmar",
+        "total_samples": 100,
+        "accuracy": 98.0,
+        "avg_words": 8.59,
+        "mean_hmar_conf": 0.67193,
+        "mean_casual_ratio": 95.2646,
+        "stopword_hit_rate": 4.0,
+        "mean_unknown_ratio": 4.7354
+      },
+      "Mizo (CLB)": {
+        "iso": "lus",
+        "target": "other",
+        "total_samples": 100,
+        "accuracy": 48.0,
+        "avg_words": 9.86,
+        "mean_hmar_conf": 0.378152,
+        "mean_casual_ratio": 73.9842,
+        "stopword_hit_rate": 37.0,
+        "mean_unknown_ratio": 26.0158
+      },
+      "Mizo (OV)": {
+        "iso": "lus",
+        "target": "other",
+        "total_samples": 100,
+        "accuracy": 65.0,
+        "avg_words": 9.29,
+        "mean_hmar_conf": 0.290139,
+        "mean_casual_ratio": 69.0509,
+        "stopword_hit_rate": 37.0,
+        "mean_unknown_ratio": 30.9491
+      },
+      "Paite (BSI)": {
+        "iso": "pck",
+        "target": "other",
+        "total_samples": 100,
+        "accuracy": 98.0,
+        "avg_words": 9.8,
+        "mean_hmar_conf": 0.011207,
+        "mean_casual_ratio": 39.8032,
+        "stopword_hit_rate": 41.0,
+        "mean_unknown_ratio": 60.1968
+      },
+      "Thadou (BSI)": {
+        "iso": "tcz",
+        "target": "other",
+        "total_samples": 100,
+        "accuracy": 99.0,
+        "avg_words": 6.81,
+        "mean_hmar_conf": 0.0017480000000000002,
+        "mean_casual_ratio": 19.9504,
+        "stopword_hit_rate": 28.999999999999996,
+        "mean_unknown_ratio": 80.0496
+      },
+      "Vaiphei (BSI)": {
+        "iso": "vap",
+        "target": "other",
+        "total_samples": 100,
+        "accuracy": 85.0,
+        "avg_words": 8.53,
+        "mean_hmar_conf": 0.08267899999999999,
+        "mean_casual_ratio": 52.5266,
+        "stopword_hit_rate": 34.0,
+        "mean_unknown_ratio": 47.4734
+      },
+      "Zou (BSI)": {
+        "iso": "zom",
+        "target": "other",
+        "total_samples": 100,
+        "accuracy": 96.0,
+        "avg_words": 9.42,
+        "mean_hmar_conf": 0.019735,
+        "mean_casual_ratio": 40.6409,
+        "stopword_hit_rate": 42.0,
+        "mean_unknown_ratio": 59.3591
+      }
+    },
+    "tier2_verse": {
+      "English (WEB)": {
+        "iso": "eng",
+        "target": "english",
+        "total_samples": 80,
+        "accuracy": 100.0,
+        "avg_words": 21.45,
+        "mean_hmar_conf": 0.0,
+        "mean_casual_ratio": 25.1965,
+        "stopword_hit_rate": 0.0,
+        "mean_unknown_ratio": 74.8035
+      },
+      "Gangte (BSI)": {
+        "iso": "gnb",
+        "target": "other",
+        "total_samples": 80,
+        "accuracy": 72.5,
+        "avg_words": 25.475,
+        "mean_hmar_conf": 0.19312500000000002,
+        "mean_casual_ratio": 62.689125000000004,
+        "stopword_hit_rate": 45.0,
+        "mean_unknown_ratio": 37.310874999999996
+      },
+      "Hmar (CLB)": {
+        "iso": "hmr",
+        "target": "hmar",
+        "total_samples": 80,
+        "accuracy": 100.0,
+        "avg_words": 20.025,
+        "mean_hmar_conf": 0.91945,
+        "mean_casual_ratio": 94.89912500000001,
+        "stopword_hit_rate": 6.25,
+        "mean_unknown_ratio": 5.100875
+      },
+      "Hmar (OV)": {
+        "iso": "hmr",
+        "target": "hmar",
+        "total_samples": 80,
+        "accuracy": 100.0,
+        "avg_words": 19.85,
+        "mean_hmar_conf": 0.9187775,
+        "mean_casual_ratio": 95.1945,
+        "stopword_hit_rate": 6.25,
+        "mean_unknown_ratio": 4.8055
+      },
+      "Mizo (CLB)": {
+        "iso": "lus",
+        "target": "other",
+        "total_samples": 80,
+        "accuracy": 62.5,
+        "avg_words": 20.725,
+        "mean_hmar_conf": 0.43874,
+        "mean_casual_ratio": 73.726125,
+        "stopword_hit_rate": 67.5,
+        "mean_unknown_ratio": 26.273874999999997
+      },
+      "Mizo (OV)": {
+        "iso": "lus",
+        "target": "other",
+        "total_samples": 80,
+        "accuracy": 81.25,
+        "avg_words": 20.8125,
+        "mean_hmar_conf": 0.2997025,
+        "mean_casual_ratio": 68.39475,
+        "stopword_hit_rate": 58.75,
+        "mean_unknown_ratio": 31.605249999999995
+      },
+      "Paite (BSI)": {
+        "iso": "pck",
+        "target": "other",
+        "total_samples": 80,
+        "accuracy": 100.0,
+        "avg_words": 20.175,
+        "mean_hmar_conf": 0.0015400000000000001,
+        "mean_casual_ratio": 40.153125,
+        "stopword_hit_rate": 70.0,
+        "mean_unknown_ratio": 59.846875
+      },
+      "Thadou (BSI)": {
+        "iso": "tcz",
+        "target": "other",
+        "total_samples": 80,
+        "accuracy": 98.75,
+        "avg_words": 16.475,
+        "mean_hmar_conf": 0.0,
+        "mean_casual_ratio": 21.03425,
+        "stopword_hit_rate": 62.5,
+        "mean_unknown_ratio": 78.96575
+      },
+      "Vaiphei (BSI)": {
+        "iso": "vap",
+        "target": "other",
+        "total_samples": 80,
+        "accuracy": 96.25,
+        "avg_words": 22.2125,
+        "mean_hmar_conf": 0.0257425,
+        "mean_casual_ratio": 48.628,
+        "stopword_hit_rate": 67.5,
+        "mean_unknown_ratio": 51.37199999999999
+      },
+      "Zou (BSI)": {
+        "iso": "zom",
+        "target": "other",
+        "total_samples": 80,
+        "accuracy": 100.0,
+        "avg_words": 20.275,
+        "mean_hmar_conf": 0.00064,
+        "mean_casual_ratio": 41.492250000000006,
+        "stopword_hit_rate": 71.25,
+        "mean_unknown_ratio": 58.507749999999994
+      }
+    },
+    "tier3_multiverse": {
+      "English (WEB)": {
+        "iso": "eng",
+        "target": "english",
+        "total_samples": 40,
+        "accuracy": 100.0,
+        "avg_words": 73.775,
+        "mean_hmar_conf": 0.0,
+        "mean_casual_ratio": 24.482,
+        "stopword_hit_rate": 0.0,
+        "mean_unknown_ratio": 75.518
+      },
+      "Gangte (BSI)": {
+        "iso": "gnb",
+        "target": "other",
+        "total_samples": 40,
+        "accuracy": 95.0,
+        "avg_words": 86.3,
+        "mean_hmar_conf": 0.1212475,
+        "mean_casual_ratio": 60.985,
+        "stopword_hit_rate": 72.5,
+        "mean_unknown_ratio": 39.015
+      },
+      "Hmar (CLB)": {
+        "iso": "hmr",
+        "target": "hmar",
+        "total_samples": 40,
+        "accuracy": 100.0,
+        "avg_words": 71.55,
+        "mean_hmar_conf": 0.9814674999999999,
+        "mean_casual_ratio": 94.76475,
+        "stopword_hit_rate": 12.5,
+        "mean_unknown_ratio": 5.235250000000001
+      },
+      "Hmar (OV)": {
+        "iso": "hmr",
+        "target": "hmar",
+        "total_samples": 40,
+        "accuracy": 100.0,
+        "avg_words": 70.8,
+        "mean_hmar_conf": 0.981465,
+        "mean_casual_ratio": 95.01225,
+        "stopword_hit_rate": 12.5,
+        "mean_unknown_ratio": 4.98775
+      },
+      "Mizo (CLB)": {
+        "iso": "lus",
+        "target": "other",
+        "total_samples": 40,
+        "accuracy": 97.5,
+        "avg_words": 73.1,
+        "mean_hmar_conf": 0.41777749999999997,
+        "mean_casual_ratio": 72.4115,
+        "stopword_hit_rate": 87.5,
+        "mean_unknown_ratio": 27.588500000000003
+      },
+      "Mizo (OV)": {
+        "iso": "lus",
+        "target": "other",
+        "total_samples": 40,
+        "accuracy": 90.0,
+        "avg_words": 59.025,
+        "mean_hmar_conf": 0.292675,
+        "mean_casual_ratio": 68.67699999999999,
+        "stopword_hit_rate": 80.0,
+        "mean_unknown_ratio": 31.323
+      },
+      "Paite (BSI)": {
+        "iso": "pck",
+        "target": "other",
+        "total_samples": 40,
+        "accuracy": 100.0,
+        "avg_words": 71.15,
+        "mean_hmar_conf": 0.0,
+        "mean_casual_ratio": 41.6865,
+        "stopword_hit_rate": 95.0,
+        "mean_unknown_ratio": 58.3135
+      },
+      "Thadou (BSI)": {
+        "iso": "tcz",
+        "target": "other",
+        "total_samples": 40,
+        "accuracy": 100.0,
+        "avg_words": 58.175,
+        "mean_hmar_conf": 0.0,
+        "mean_casual_ratio": 21.63025,
+        "stopword_hit_rate": 90.0,
+        "mean_unknown_ratio": 78.36975
+      },
+      "Vaiphei (BSI)": {
+        "iso": "vap",
+        "target": "other",
+        "total_samples": 40,
+        "accuracy": 97.5,
+        "avg_words": 79.1,
+        "mean_hmar_conf": 0.0240975,
+        "mean_casual_ratio": 50.969500000000004,
+        "stopword_hit_rate": 97.5,
+        "mean_unknown_ratio": 49.0305
+      },
+      "Zou (BSI)": {
+        "iso": "zom",
+        "target": "other",
+        "total_samples": 40,
+        "accuracy": 100.0,
+        "avg_words": 70.475,
+        "mean_hmar_conf": 0.0,
+        "mean_casual_ratio": 39.73075,
+        "stopword_hit_rate": 95.0,
+        "mean_unknown_ratio": 60.26925000000001
+      }
+    },
+    "tier4_chapter": {
+      "English (WEB)": {
+        "iso": "eng",
+        "target": "english",
+        "total_samples": 492,
+        "accuracy": 100.0,
+        "avg_words": 510.4532520325203,
+        "mean_hmar_conf": 0.0,
+        "mean_casual_ratio": 22.75941056910569,
+        "stopword_hit_rate": 0.0,
+        "mean_unknown_ratio": 77.24058943089432
+      },
+      "Gangte (BSI)": {
+        "iso": "gnb",
+        "target": "other",
+        "total_samples": 492,
+        "accuracy": 99.1869918699187,
+        "avg_words": 598.3577235772358,
+        "mean_hmar_conf": 0.14885081300813008,
+        "mean_casual_ratio": 64.19859756097561,
+        "stopword_hit_rate": 97.96747967479675,
+        "mean_unknown_ratio": 35.801402439024386
+      },
+      "Hmar (CLB)": {
+        "iso": "hmr",
+        "target": "hmar",
+        "total_samples": 492,
+        "accuracy": 100.0,
+        "avg_words": 583.9186991869918,
+        "mean_hmar_conf": 0.9944056910569106,
+        "mean_casual_ratio": 93.63841463414634,
+        "stopword_hit_rate": 64.43089430894308,
+        "mean_unknown_ratio": 6.361585365853658
+      },
+      "Hmar (OV)": {
+        "iso": "hmr",
+        "target": "hmar",
+        "total_samples": 492,
+        "accuracy": 100.0,
+        "avg_words": 578.569105691057,
+        "mean_hmar_conf": 0.9934989837398374,
+        "mean_casual_ratio": 93.78772357723578,
+        "stopword_hit_rate": 64.63414634146342,
+        "mean_unknown_ratio": 6.212276422764227
+      },
+      "Mizo (CLB)": {
+        "iso": "lus",
+        "target": "other",
+        "total_samples": 492,
+        "accuracy": 97.76422764227642,
+        "avg_words": 516.5243902439024,
+        "mean_hmar_conf": 0.4854121951219512,
+        "mean_casual_ratio": 74.61432926829269,
+        "stopword_hit_rate": 98.78048780487805,
+        "mean_unknown_ratio": 25.38569105691057
+      },
+      "Mizo (OV)": {
+        "iso": "lus",
+        "target": "other",
+        "total_samples": 492,
+        "accuracy": 98.57723577235772,
+        "avg_words": 556.7154471544716,
+        "mean_hmar_conf": 0.4689493902439024,
+        "mean_casual_ratio": 74.09969512195121,
+        "stopword_hit_rate": 98.78048780487805,
+        "mean_unknown_ratio": 25.900284552845527
+      },
+      "Paite (BSI)": {
+        "iso": "pck",
+        "target": "other",
+        "total_samples": 492,
+        "accuracy": 100.0,
+        "avg_words": 499.2032520325203,
+        "mean_hmar_conf": 0.0004461382113821138,
+        "mean_casual_ratio": 45.58548780487805,
+        "stopword_hit_rate": 100.0,
+        "mean_unknown_ratio": 54.41451219512196
+      },
+      "Thadou (BSI)": {
+        "iso": "tcz",
+        "target": "other",
+        "total_samples": 492,
+        "accuracy": 100.0,
+        "avg_words": 405.9166666666667,
+        "mean_hmar_conf": 0.0,
+        "mean_casual_ratio": 23.517845528455286,
+        "stopword_hit_rate": 99.79674796747967,
+        "mean_unknown_ratio": 76.48217479674797
+      },
+      "Vaiphei (BSI)": {
+        "iso": "vap",
+        "target": "other",
+        "total_samples": 492,
+        "accuracy": 100.0,
+        "avg_words": 603.770325203252,
+        "mean_hmar_conf": 0.011591260162601626,
+        "mean_casual_ratio": 56.43268292682927,
+        "stopword_hit_rate": 100.0,
+        "mean_unknown_ratio": 43.56731707317073
+      },
+      "Zou (BSI)": {
+        "iso": "zom",
+        "target": "other",
+        "total_samples": 492,
+        "accuracy": 100.0,
+        "avg_words": 513.7926829268292,
+        "mean_hmar_conf": 0.0001201219512195122,
+        "mean_casual_ratio": 45.231199186991866,
+        "stopword_hit_rate": 100.0,
+        "mean_unknown_ratio": 54.76880081300812
+      }
+    }
+  }
+}
