@@ -179,36 +179,14 @@ offline_detector = Detector(offline_only=True)
 
 ---
 
-## Benchmarks & Evaluation
+### Benchmarks & Reports
 
-### 1. Parallel Zo Bible Passages
+Detailed empirical benchmark evaluations and multi-trial qualitative reports are maintained in the [`reports/`](./reports) directory:
 
-Evaluated across parallel chapters (Genesis 1, Exodus 20, Matthew 5, Luke 2, Romans 8, Revelation 21) across 10 Bible translations in 8 Zo languages + English:
+- **[Parallel Zo Bible Benchmark Report](./reports/parallel_zo_bibles.md):** 10 Bible translations across 8 Zo languages + English. Achieves **100% precision** on Hmar (CLB & OV), Mizo, Paite, Thadou, and English.
+- **[Web Publisher Archives Evaluation Report](./reports/web_archives.md):** Analysis of ~1,300 web documents across 5 publisher archives (*Keivom*, *Inpui*, *HSA*, *Hmarram*, *Virthli*).
+- **[Length Sensitivity & Multi-Trial Cross-Validation](./reports/length_sensitivity.md):** Multi-trial evaluation across text length boundaries and chapter splits.
 
-| Language | Edition / Source | Target Class | Engine Assigned Label | Classification Accuracy | Avg Hmar Confidence | Key Distinguishing Metrics |
-| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Hmar** | CLB (Contemporary) | `hmar` | `hmar` | **100%** | **1.0000** | `casual_hmar_ratio` $\ge 0.94$, `unknown_words_ratio` $\le 0.06$ |
-| **Hmar** | OV (Old Version) | `hmar` | `hmar` | **100%** | **1.0000** | Formal diacritic match + `hmar_diacritic_words_count` $>0$ |
-| **English** | WEB (World English) | `english` | `english` | **100%** | **0.0000** | `english_stopword_ratio` ($>0.08$) & `unknown_words_ratio` ($>0.70$) |
-| **Mizo** | CLB / OV (Mizo Bibles) | `mizo` | `mizo` | **100%** | **0.4861** | Matched Mizo exclusive particles (`pathian`, `hnenah`, `avangin`, `tichuan`) |
-| **Paite** | Paite Bible (BSI) | `paite` | `paite` | **100%** | **0.0000** | Matched Paite exclusive particles (`pasian`, `toupa`, `kipat`) & 13.3k exclusive words |
-| **Thadou** | Thadou-Kuki Bible | `thadou` | `thadou` | **100%** | **0.0000** | Matched Thadou exclusive particles (`pathen`, `hiche`, `hinanleh`) & 47.2k exclusive words |
-
-> **Cognate Resolution:** Related Zo languages like Mizo share up to 74% vocabulary overlap with Hmar. `hmaraniam` separates sibling Zo languages by combining vocabulary coverage thresholds with dialect-exclusive structural particles and exclusive wordlists.
-
----
-
-### 2. Web Archive Evaluation (~1,300 Documents)
-
-Evaluated on scraped web documents from 5 Hmar/Zo web publishers:
-
-| Publisher Web Archive | Corpus Source / Format | Evaluated Items | Hmar Posts (%) | English Posts (%) | Other / Mixed Posts (%) | Avg Hmar Confidence | Mean Casual Hmar Ratio | Mean Formal Hmar Ratio | Mean Unknown Words Ratio | Primary Content Profile |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **L. Keivom Archive** (`keivom`) | Blogger API JSON | 300 | **192 (64.0%)** | 32 (10.7%) | 76 (25.3%) | **0.8220** | **78.8%** | 69.5% | 21.2% | Hmar literary essays & prose |
-| **Inpui Journal** (`inpui`) | Blogger API JSON | 291 | **120 (41.2%)** | 66 (22.7%) | 105 (36.1%) | **0.7357** | **63.5%** | 55.6% | 36.5% | Bilingual news journal & opinion pieces |
-| **HSA Portal** (`hsa`) | WordPress API JSON | 177 | **23 (13.0%)** | 38 (21.5%) | **116 (65.5%)** | 0.5679 | **53.5%** | 46.5% | 46.5% | Student association alerts & mixed posts |
-| **Hmarram.com** (`hmarram`) | WordPress API JSON | 235 | 12 (5.1%) | **209 (88.9%)** | 14 (6.0%) | 0.7658 | 31.0% | 23.7% | 69.0% | Tech articles & English press releases |
-| **Virthli News** (`virthli`) | Scraped Raw HTML | 296 | 5 (1.7%) | **267 (90.2%)** | 24 (8.1%) | 0.8694 | 17.4% | 13.2% | 82.6% | Employment alerts & exam guidelines |
 
 ---
 
