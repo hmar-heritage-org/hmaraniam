@@ -94,7 +94,17 @@ def generate_zo_bible_report():
         scores = res["scores"]
 
         iso = info["iso"]
-        target = "hmar" if iso == "hmr" else ("english" if iso == "eng" else "other")
+        iso_target_map = {
+            "hmr": "hmar",
+            "eng": "english",
+            "lus": "mizo",
+            "pck": "paite",
+            "tcz": "thadou",
+            "gnb": "gangte",
+            "zou": "zou",
+            "vap": "vaiphei",
+        }
+        target = iso_target_map.get(iso, "other")
         assigned = res["language"]
         is_correct = assigned == target
         total_evals += 1

@@ -174,6 +174,7 @@ class Detector:
         self.normalized_hmar_vocab: Set[str] = set()
         self.english_stopwords: Set[str] = set()
         self.sibling_zo_stopwords: Set[str] = set()
+        self.sibling_zo_stopwords_by_lang: Dict[str, Set[str]] = {}
 
         # 1. Load Stopwords
         if not disable_default_stopwords:
@@ -212,9 +213,20 @@ class Detector:
 
         if BUNDLED_SIBLING_STOPWORDS.exists():
             with open(BUNDLED_SIBLING_STOPWORDS, "r", encoding="utf-8") as f:
-                self.sibling_zo_stopwords = {strip_diacritics(w.lower()) for w in json.load(f)}
+                raw_data = json.load(f)
+                if isinstance(raw_data, dict):
+                    self.sibling_zo_stopwords_by_lang = {
+                        lang: {strip_diacritics(w.lower()) for w in words}
+                        for lang, words in raw_data.items()
+                    }
+                    self.sibling_zo_stopwords = set().union(*self.sibling_zo_stopwords_by_lang.values())
+                elif isinstance(raw_data, list):
+                    all_stops = {strip_diacritics(w.lower()) for w in raw_data}
+                    self.sibling_zo_stopwords = all_stops
+                    self.sibling_zo_stopwords_by_lang = {"sibling": all_stops}
         else:
             self.sibling_zo_stopwords = set()
+            self.sibling_zo_stopwords_by_lang = {}
 
     def _get_shard_filenames(self) -> List[str]:
         """Determine which shard filenames to load based on mode."""
@@ -331,6 +343,17 @@ class Detector:
         eng_stop_matches = sum(1 for w in words if w in self.english_stopwords)
         sibling_zo_matches = sum(1 for w in words if strip_diacritics(w) in self.sibling_zo_stopwords)
 
+        # Count sibling stopword hits per specific language
+        sibling_lang_counts: Dict[str, int] = {}
+        for lang_code, stop_set in self.sibling_zo_stopwords_by_lang.items():
+            cnt = sum(1 for w in words if strip_diacritics(w) in stop_set)
+            if cnt > 0:
+                sibling_lang_counts[lang_code] = cnt
+
+        best_sibling_lang = None
+        if sibling_lang_counts:
+            best_sibling_lang = max(sibling_lang_counts, key=sibling_lang_counts.get)
+
         # Diacritic breakdown
         hmar_diacritic_words_count = 0
         non_hmar_diacritic_words_count = 0
@@ -355,6 +378,7 @@ class Detector:
         sibling_zo_ratio = sibling_zo_matches / total_words
 
         # 3. Classification Logic
+        sibling_heuristic = False
         if eng_stop_ratio >= 0.025 and casual_hmar_ratio < 0.40:
             language = "english"
         elif casual_hmar_ratio >= 0.82 and unknown_words_ratio <= 0.18:
@@ -363,8 +387,11 @@ class Detector:
             language = "hmar"
         elif eng_stop_ratio >= 0.02:
             language = "english"
+        elif best_sibling_lang:
+            language = best_sibling_lang  # "mizo", "paite", "thadou", "gangte", "zou", "vaiphei"
+            sibling_heuristic = True
         else:
-            language = "other"  # Mizo, Paite, Vaiphei, Zou, Gangte, Thadou, or unclassified
+            language = "other"  # Unclassified non-Hmar text
 
         # 4. Continuous Mathematical Confidence Score calculation [0.0000 - 1.0000]
         # Bayesian Length Weighting: W_len = 1 - exp(-N / 6)
@@ -383,7 +410,7 @@ class Detector:
             eng_signal = max(0.0, eng_stop_ratio - (casual_hmar_ratio / 5.0))
             eng_conf_raw = min(1.0, eng_signal / 0.04) * len_weight
             detected_language_confidence = round(min(1.0, max(0.0, eng_conf_raw)), 4)
-        elif language == "other":
+        elif sibling_heuristic or language == "other":
             if sibling_zo_matches > 0 or sibling_zo_ratio >= 0.01:
                 # Actively verified non-Hmar Zo (Kuki-Chin) sibling language match!
                 sibling_signal = max(0.0, (sibling_zo_ratio * 4.0) + (unknown_words_ratio * 0.5))
@@ -401,6 +428,7 @@ class Detector:
             "language": language,
             "hmar_confidence": hmar_confidence,
             "detected_language_confidence": detected_language_confidence,
+            "sibling_heuristic": sibling_heuristic,
             "mode": self.mode,
             "scores": {
                 "casual_hmar_ratio": round(casual_hmar_ratio, 4),
@@ -414,6 +442,7 @@ class Detector:
                 "unknown_words_count": unknown_words_count,
                 "english_stopwords_count": eng_stop_matches,
                 "sibling_zo_stopwords_count": sibling_zo_matches,
+                "sibling_lang_counts": sibling_lang_counts,
                 "hmar_diacritic_words_count": hmar_diacritic_words_count,
                 "non_hmar_diacritic_words_count": non_hmar_diacritic_words_count,
                 "total_diacritic_words_count": total_diacritic_words_count,
@@ -426,6 +455,7 @@ class Detector:
             "language": "unknown",
             "hmar_confidence": 0.0,
             "detected_language_confidence": 0.0,
+            "sibling_heuristic": False,
             "mode": self.mode,
             "scores": {
                 "casual_hmar_ratio": 0.0,
