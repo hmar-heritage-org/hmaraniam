@@ -64,12 +64,12 @@ For raw un-tokenized prose containing full sentences or multi-word lines, the en
 extracts word tokens using basic word boundary regex matching.
 
 A. Raw Article File (article.txt):
-   Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu...
+   Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu lien lema...
    Usage: hmaraniam article.txt
 
 B. Raw Text String / Stdin Pipe:
-   hmaraniam "Khawvel fe dan phung ei en chun..."
-   echo "Khawvel fe dan..." | hmaraniam
+   hmaraniam "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk..."
+   echo "Khawvel fe dan phung..." | hmaraniam
 """,
 
     "schema": """
@@ -218,7 +218,7 @@ OPTIONS:
 
 EXAMPLES:
   # Evaluate a raw text string
-  hmaraniam "Khawvel fe dan phung ei en chun..."
+  hmaraniam "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu..."
 
   # Evaluate a pre-tokenized JSON array file (1 token per item)
   hmaraniam tokens.json

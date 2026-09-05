@@ -9,7 +9,7 @@ from hmaraniam import Detector, detect
 class TestHmaraniam(unittest.TestCase):
 
     def test_hmar_detection_basic(self):
-        sample_text = "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu lien lema intel le insung khawm a nih."
+        sample_text = "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu lien lema intel le insung khawm, zai khat le trong khata luong khawm a nih."
         res = detect(sample_text, mode="basic")
         self.assertEqual(res["language"], "hmar")
         self.assertGreaterEqual(res["hmar_confidence"], 0.70)
@@ -47,7 +47,7 @@ class TestHmaraniam(unittest.TestCase):
         self.assertEqual(res["scores"]["non_hmar_words_count"], 0)
 
     def test_hmar_detection_high_mode(self):
-        sample_text = "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu lien lema intel le insung khawm a nih."
+        sample_text = "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu lien lema intel le insung khawm, zai khat le trong khata luong khawm a nih."
         detector = Detector(mode="high", offline_only=True)
         res = detector.detect(sample_text)
         self.assertEqual(res["language"], "hmar")

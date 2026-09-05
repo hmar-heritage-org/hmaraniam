@@ -71,8 +71,8 @@ pip install hmaraniam
 ```python
 import hmaraniam
 
-# Authentic text from L. Keivom archive
-sample_text = "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu lien lema intel le insung khawm a nih."
+# Authentic text quote from L. Keivom archive (Coleman Factor, 2002)
+sample_text = "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu lien lema intel le insung khawm, zai khat le trong khata luong khawm a nih."
 
 result = hmaraniam.detect(sample_text)
 print(result)
