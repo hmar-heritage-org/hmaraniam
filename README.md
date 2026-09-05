@@ -179,13 +179,13 @@ offline_detector = Detector(offline_only=True)
 
 ---
 
-### Benchmarks & Reports
+## Benchmarks & Reports
 
-Detailed empirical benchmark evaluations and multi-trial qualitative reports are maintained in the [`reports/`](./reports) directory in the codebase (*if reading this on PyPI, visit our [GitHub Repository](https://github.com/hmar-heritage-org/hmaraniam) to view the reports folder*):
+Check out the [`reports/`](./reports) folder for full test results and breakdown (*if you're reading this on PyPI, head over to our [GitHub repo](https://github.com/hmar-heritage-org/hmaraniam)*):
 
-- **Parallel Zo Bible Benchmark Report** (`reports/parallel_zo_bibles.md`): 10 Bible translations across 8 Zo languages + English. Achieves **100% precision** on Hmar (CLB & OV), Mizo, Paite, Thadou, and English.
-- **Web Publisher Archives Evaluation Report** (`reports/web_archives.md`): Analysis of ~1,300 web documents across 5 publisher archives (*Keivom*, *Inpui*, *HSA*, *Hmarram*, *Virthli*).
-- **Length Sensitivity & Multi-Trial Cross-Validation** (`reports/length_sensitivity.md`): Multi-trial evaluation across text length boundaries and chapter splits.
+- **Parallel Zo Bible Test (`reports/parallel_zo_bibles.md`):** Tested across 10 Bible translations in 8 Zo languages + English. Hits 100% accuracy on Hmar (CLB & OV), Mizo, Paite, Thadou, and English.
+- **Web Archives Test (`reports/web_archives.md`):** Tested on ~1,300 web posts across 5 site archives (*Keivom*, *Inpui*, *HSA*, *Hmarram*, *Virthli*).
+- **Text Length Tests (`reports/length_sensitivity.md`):** Checks how well the detector handles short vs long text snippets.
 
 
 ---
