@@ -82,7 +82,21 @@ def load_tokens(input_data: Union[str, List[str], Tuple[str, ...], Path]) -> Lis
         cleaned_text = re.sub(r"\b[\w\.-]+@[\w\.-]+\.\w+\b", " ", cleaned_text)
         return [w.lower() for w in re.findall(r"\b[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF'-]+\b", cleaned_text)]
 
-    raise TypeError(f"Expected input to be a string, list of tokens, or file path, got {type(input_data).__name__}")
+def _resolve_wordlist(data: Optional[Union[List[str], Set[str], Tuple[str, ...], str, Path]]) -> Set[str]:
+    """Resolve wordlist from Python sequences, sets, or file paths (.json, .csv, .txt)."""
+    if not data:
+        return set()
+    if isinstance(data, (str, Path)):
+        p = Path(data)
+        if p.exists() and p.is_file():
+            return {w.lower() for w in load_tokens(p)}
+        if isinstance(data, str) and (data.endswith((".json", ".csv", ".txt")) or "/" in data or "\\" in data):
+            return set()
+    if isinstance(data, (list, tuple, set)):
+        return {str(w).lower().strip() for w in data if str(w).strip()}
+    if isinstance(data, str):
+        return {data.lower().strip()}
+    return set()
 
 
 class Detector:
@@ -126,19 +140,21 @@ class Detector:
             self._load_stopwords()
 
         if custom_stopwords:
+            custom_stops = _resolve_wordlist(custom_stopwords)
             if disable_default_stopwords:
-                self.english_stopwords = {w.lower() for w in custom_stopwords}
+                self.english_stopwords = custom_stops
             else:
-                self.english_stopwords.update({w.lower() for w in custom_stopwords})
+                self.english_stopwords.update(custom_stops)
 
         # 2. Load Unigrams
         if custom_unigrams:
-            exact_words = {w.lower() for w in custom_unigrams}
+            exact_words = _resolve_wordlist(custom_unigrams)
         else:
             exact_words = self._load_unigram_shards(force_remote=force_remote)
 
         if extra_unigrams:
-            exact_words.update({w.lower() for w in extra_unigrams})
+            extra_words = _resolve_wordlist(extra_unigrams)
+            exact_words.update(extra_words)
 
         self.exact_hmar_vocab = exact_words
         self.normalized_hmar_vocab = {strip_diacritics(w) for w in exact_words}
