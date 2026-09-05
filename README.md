@@ -179,21 +179,10 @@ offline_detector = Detector(offline_only=True)
 
 ---
 
-## Benchmarks & Reports
-
-Check out the [`reports/`](./reports) folder for full test results and breakdown (*if you're reading this on PyPI, head over to our [GitHub repo](https://github.com/hmar-heritage-org/hmaraniam)*):
-
-- **Parallel Zo Bible Test (`reports/parallel_zo_bibles.md`):** Tested across 10 Bible translations in 8 Zo languages + English. Hits 100% accuracy on Hmar (CLB & OV), Mizo, Paite, Thadou, and English.
-- **Web Archives Test (`reports/web_archives.md`):** Tested on ~1,300 web posts across 5 site archives (*Keivom*, *Inpui*, *HSA*, *Hmarram*, *Virthli*).
-- **Text Length Tests (`reports/length_sensitivity.md`):** Checks how well the detector handles short vs long text snippets.
-
-
----
-
 ## Datasets & Repositories
 
 - **[Hmar Unigrams Dataset (`unigrams`)](https://huggingface.co/datasets/hmar-heritage-org/unigrams):** 58,983 verified Hmar surface words and active loanwords generated via `hmaraniam`'s extraction pipeline.
-- **[Corpus Archive (`corpus-archive`)](https://huggingface.co/datasets/hmar-heritage-org/corpus-archive):** Archival text corpus preserving Hmar literature, lexicons, and parallel Bible datasets.
+- **[Corpus Archive (`corpus-archive`)](https://huggingface.co/datasets/hmar-heritage-org/corpus-archive):** Archival text corpus preserving Hmar literature and lexicons.
 
 ---
 

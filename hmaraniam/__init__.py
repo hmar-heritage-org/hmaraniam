@@ -7,7 +7,7 @@ Pure string language identification engine.
 
 from hmaraniam.detector import Detector, detect, get_default_detector
 
-__version__ = "0.1.6"
+__version__ = "0.1.7"
 __author__ = "Hmar Heritage Foundation"
 __license__ = "MIT"
 

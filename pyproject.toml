@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hmaraniam"
-version = "0.1.6"
+version = "0.1.7"
 description = "Zero-dependency language identification library for Hmar ('Hmar a ni am?')"
 readme = "README.md"
 requires-python = ">=3.8"
