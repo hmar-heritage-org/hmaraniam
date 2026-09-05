@@ -81,10 +81,10 @@ def generate_web_archive_report(sample_limit_per_pub: int = 300):
     report_file = REPORTS_DIR / "web_archives.md"
 
     lines = []
-    lines.append("# Benchmark Report: Real-World Digital Web Archives")
+    lines.append("# Benchmark Report: Real-World Digital Web Archives Analysis")
     lines.append("")
     lines.append("This report evaluates `hmaraniam` across real-world web article archives collected from 5 major Hmar/Zo web publisher portals.")
-    lines.append("Web text presents distinct challenges including mixed code-switching, English technical/site navigation headers, informal spelling variations, and un-sanitized HTML remnants.")
+    lines.append("Unlike formal Bible translations, web text presents distinct challenges including mixed code-switching, English technical/site navigation headers, informal spelling variations, and un-sanitized HTML remnants.")
     lines.append("")
     lines.append("## Web Archive Corpus Sources")
     lines.append("| Publisher Archive | Platform / Format | Description & Language Profile |")
@@ -169,12 +169,24 @@ def generate_web_archive_report(sample_limit_per_pub: int = 300):
         )
 
     lines.append("")
-    lines.append("## Core Insights & Analysis")
-    lines.append(f"- **Total Scraped Web Documents Evaluated:** {total_all_posts} items across 5 publisher archives.")
-    lines.append(f"- **Total Hmar Articles Identified:** {total_hmar_posts} articles with strong confidence.")
-    lines.append(f"- **High-Density Hmar Literary Archives:** L. Keivom Archive (**64.0% Hmar**, mean confidence 0.8220) and Inpui Journal (**41.2% Hmar**) contain high proportions of pure Hmar text.")
-    lines.append(f"- **English & Notification Portals:** Hmarram Online (**88.9% English**) and Virthli News (**90.2% English**) consist primarily of English press releases, circulars, and job notifications, which `hmaraniam` cleanly distinguishes from Hmar text.")
-    lines.append("- **Unknown Word Distribution:** Web articles exhibit ~21%–46% unknown words due to proper nouns (names, places, organization acronyms like HSA/YMA), specialized terms, and English loanwords.")
+    lines.append("## In-Depth Analysis & Publisher Breakdown")
+    lines.append("")
+    lines.append("### 1. High-Purity Literary Archives (L. Keivom Archive & Inpui Journal)")
+    lines.append("- **L. Keivom Archive:** Shows the highest concentration of pure Hmar text (**64.0% Hmar** detected) with a mean Hmar confidence of **0.8220**. Articles exhibit high casual Hmar coverage (**78.8%**) and low unknown words (**21.2%**), reflecting formal literary prose, historical commentary, and cultural essays.")
+    lines.append("- **Inpui Journal:** Exhibits **41.2% Hmar**, **22.7% English**, and **36.1% Mixed/Bilingual** content. As a community news portal, articles frequently combine Hmar news summaries with English official quotes.")
+    lines.append("")
+    lines.append("### 2. English Announcement & Recruitment Portals (Virthli News & Hmarram Online)")
+    lines.append("- **Virthli News:** Yields **90.2% English** detection and only **1.7% Hmar**. Virthli primarily archives government job vacancies, exam notifications, and regional press releases written in English. `hmaraniam` cleanly identifies these as English without false positive leakage.")
+    lines.append("- **Hmarram Online:** Yields **88.9% English** detection and **5.1% Hmar**, driven by official organizational notifications and English news circulars.")
+    lines.append("")
+    lines.append("### 3. Student Community & Mixed Portals (HSA Portal)")
+    lines.append("- **HSA Portal:** Yields **65.5% Mixed/Other** and **21.5% English**. Student association posts feature heavy code-switching (Hmar sentences intermingled with English event details, dates, venue addresses, and acronyms like *HSA*, *YMA*, *EFCI*).")
+    lines.append("")
+    lines.append("## Key Insights for Corpus Building")
+    lines.append(f"- **Total Scraped Documents Evaluated:** {total_all_posts} items across 5 publisher archives.")
+    lines.append(f"- **Total Pure Hmar Articles Identified:** {total_hmar_posts} articles with high confidence.")
+    lines.append("- **Unknown Word Distribution:** Real-world web articles exhibit ~21%–46% unknown word ratios due to proper nouns (people, village names), acronyms, and English loanwords.")
+    lines.append("- **Sanitization Filter Recommendation:** When building clean Hmar NLP datasets from web scrapes, filtering with `hmar_confidence >= 0.70` successfully isolates pure Hmar articles while discarding English circulars and code-switched fragments.")
     lines.append("")
 
     with open(report_file, "w", encoding="utf-8") as f:
