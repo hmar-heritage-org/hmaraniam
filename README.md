@@ -1,29 +1,29 @@
 # hmaraniam 🇲z
 
-**High-precision, zero-dependency language identification library for Hmar.**
+**Zero-dependency language identification library for Hmar.**
 
 > *"Hmar a ni am?"* — *"Is it Hmar?"*
 
-`hmaraniam` is a lightweight Python library designed to accurately distinguish Hmar text from English and other Kuki-Chin / Zo languages (Mizo, Kuki, Paite, Vaiphei).
+`hmaraniam` is a lightweight Python library that identifies Hmar text and distinguishes it from English and related Kuki-Chin / Zo languages (such as Mizo, Kuki, Paite, and Vaiphei).
 
 ---
 
-## Key Features
+## Features
 
-- **Microsecond Speed:** $O(1)$ dictionary lookups with no heavy ML dependencies (PyTorch/TensorFlow free).
-- **Dual-Lens Diacritic Engine:** Reports both `casual_hmar_ratio` (ASCII-normalized for standard QWERTY typing) and `formal_hmar_ratio` (exact diacritic matching for formal literary text).
-- **Dual Continuous Confidence Metrics:** Disambiguates language metrics into `hmar_confidence` (permanent metric answering *"How confident are we that this text is Hmar?"*) and `detected_language_confidence` (confidence in the overall classification choice).
-- **Standardized Schema:** Guarantees an immutable JSON output structure across all calls, including `non_hmar_words_count` and `diacritic_words_count`.
-- **Extensible & Customizable:** Allows developers to supply `custom_unigrams`, `extra_unigrams`, `custom_stopwords`, or disable default stopwords.
-- **Dual Offline/CDN Architecture:** Automatically syncs with the live `hmar-heritage-org/hmaraniam` unigram dataset via jsDelivr CDN, with automatic local disk caching and bundled fallback.
+- **Fast dictionary lookups:** Uses $O(1)$ set matching with no machine learning dependencies (PyTorch and TensorFlow free).
+- **Dual diacritic scoring:** Reports `casual_hmar_ratio` (ASCII-normalized for standard QWERTY typing) and `formal_hmar_ratio` (exact diacritic matches for formal text).
+- **Separate confidence scores:** Separates overall classification confidence (`detected_language_confidence`) from Hmar-specific confidence (`hmar_confidence`).
+- **Consistent JSON output:** Returns the same dictionary structure for every call, including word counts and diacritic breakdowns.
+- **Custom unigrams & stopwords:** Pass custom unigram sets, extra domain vocabulary, or custom stopword lists.
+- **Offline & CDN dataset loading:** Syncs unigram sets via jsDelivr CDN with local disk caching and bundled offline fallbacks.
 
 ---
 
 ## Design Principles
 
-- **Language Identification vs. Spell Correction:** `hmaraniam` objectively evaluates vocabulary identity (*"Is this text Hmar?"*). It is not a spell checker or proofreading tool and does not make opinionated, un-empirical assumptions to "correct" typos, accent slash variations (e.g., acute `á` vs grave `à` vs circumflex `â`), or non-standard mobile keyboard codepoints (e.g. `ṭ` vs `ţ` vs `ț`).
-- **ASCII Normalization (`casual_hmar_ratio`) as Universal Ground Truth:** Because mobile keyboards and digital writers output diverse accent/slash codepoints, ASCII normalization (`strip_diacritics`) is the only deterministic, device-agnostic strategy to evaluate vocabulary identity across all platforms without font-dependency risks.
-- **Deterministic 1-Token-Per-Row Boundaries:** To avoid engine-level guessing on orthographic variants (e.g. hyphenated `"mithiem-hai"`, spaced `"mithiem hai"`, or compound `"mithiemhai"`), `hmaraniam` natively evaluates 1-token-per-row inputs (JSON, CSV, line-delimited TXT, Python Lists) with zero internal mutation.
+- **Language ID vs. Spell Correction:** `hmaraniam` measures vocabulary identity (*"Is this text Hmar?"*). It is not a spell checker and does not modify typos, character variants (acute `á`, grave `à`, circumflex `â`), or mobile keyboard codepoints (`ṭ` vs `ţ`).
+- **ASCII Normalization (`casual_hmar_ratio`):** Mobile keyboards produce varying accent codepoints. Stripping diacritics (`strip_diacritics`) allows consistent vocabulary evaluation across devices.
+- **1-Token-Per-Row Boundaries:** To evaluate hyphenated (`mithiem-hai`), spaced (`mithiem hai`), or compound (`mithiemhai`) terms directly, `hmaraniam` accepts 1-token-per-row inputs (JSON, CSV, TXT, Python lists) without re-tokenizing.
 
 ---
 
@@ -35,7 +35,7 @@ pip install hmaraniam
 
 ---
 
-## Standard Output Schema
+## Output Schema
 
 ```json
 {
@@ -78,9 +78,9 @@ result = hmaraniam.detect(sample_text)
 print(result)
 ```
 
-### Deterministic 1-Token-Per-Row Inputs (Recommended Gold Standard)
+### 1-Token-Per-Row Inputs
 
-For high-precision NLP pipelines where exact token boundaries matter (e.g. distinguishing `"mithiem-hai"` vs `"mithiem hai"` vs `"mithiemhai"`), `hmaraniam` evaluates 1-token-per-row inputs with **zero internal engine guessing or re-tokenization**:
+When token boundaries are pre-defined (such as distinguishing `"mithiem-hai"` vs `"mithiem hai"` vs `"mithiemhai"`), `hmaraniam` evaluates 1-token-per-row inputs without internal re-tokenization:
 
 #### Expected File Formats & Code Examples
 
@@ -128,9 +128,9 @@ For high-precision NLP pipelines where exact token boundaries matter (e.g. disti
 
 ---
 
-### Non-Parsed Raw Text Documents (Convenience Fallback)
+### Un-tokenized Raw Text Documents
 
-For un-tokenized prose, web articles, or raw string inputs (`article.txt`, raw text string, or stdin pipe), `hmaraniam` automatically extracts word tokens using basic word-boundary regex matching:
+For raw text files or strings (`article.txt`, raw text string, or stdin pipe), `hmaraniam` extracts word tokens using word-boundary regex matching:
 
 ```python
 # Raw text string evaluation
@@ -161,25 +161,23 @@ result = detector.detect("Khawvel fe dan phung...")
 ```python
 from hmaraniam import Detector
 
-# Basic Mode (Active default ~30k core unigrams)
+# Basic Mode (Default ~30k core unigrams)
 basic_detector = Detector(mode="basic")
 
-# High Mode (Scans data/shards/ and loads all available unigram shards, falling back seamlessly to basic)
+# High Mode (Loads extended unigram shards, falling back to basic if unavailable)
 high_detector = Detector(mode="high")
 
-# Offline-only mode (uses cached/bundled dataset without network calls)
+# Offline-only mode (uses cached or bundled dataset without network calls)
 offline_detector = Detector(offline_only=True)
 ```
 
 ---
 
-## Empirical Benchmarks & Performance
+## Benchmarks & Evaluation
 
-`hmaraniam` has been empirically validated across both **controlled parallel corpus datasets** (Parallel Zo Bibles across multiple literary genres) and **unfiltered real-world web archives** (~1,300 scraped articles and raw HTML pages across 5 major publishers).
+### 1. Parallel Zo Bible Passages
 
-### 1. Controlled Parallel Zo Bible Benchmark
-
-Evaluated across parallel chapters (Genesis 1, Exodus 20, Matthew 5, Luke 2, Romans 8, Revelation 21) across 10 parallel Bible translations in 8 Zo languages + English:
+Evaluated across parallel chapters (Genesis 1, Exodus 20, Matthew 5, Luke 2, Romans 8, Revelation 21) across 10 Bible translations in 8 Zo languages + English:
 
 | Language | Edition / Source | Evaluated Passages | Target Class | Engine Assigned Label | Classification Accuracy | Avg Hmar Confidence | Key Distinguishing Metrics |
 | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
@@ -193,30 +191,30 @@ Evaluated across parallel chapters (Genesis 1, Exodus 20, Matthew 5, Luke 2, Rom
 | **Thadou** | Thadou-Kuki Bible | Gen 1, Ex 20, Matt 5, Luke 2, Rom 8, Rev 21 | `other` | `other` | **100%** | **0.0000** | `sibling_zo_stopwords` (`pathen`, `chun`, `tichun`) & `unknown_words_ratio` ($\approx 67\%$) |
 | **English** | WEB (World English) | Gen 1, Ex 20, Matt 5, Luke 2, Rom 8, Rev 21 | `english` | `english` | **100%** | **0.0000** | `english_stopword_ratio` ($>0.08$) & `unknown_words_ratio` ($>0.70$) |
 
-> **Cognate Resolution:** Closely related sibling languages like Mizo share up to 78% unigram overlap with Hmar. `hmaraniam` cleanly resolves sibling Zo languages without requiring massive full dictionaries by combining vocabulary completeness (`unknown_words_ratio` $\le 0.18$) with curated structural markers (`sibling_zo_stopwords`).
+> **Cognate Resolution:** Related Zo languages like Mizo share up to 78% vocabulary overlap with Hmar. `hmaraniam` distinguishes sibling Zo languages by combining vocabulary coverage (`unknown_words_ratio` $\le 0.18$) with structural markers (`sibling_zo_stopwords`).
 
 ---
 
-### 2. Real-World Web Archive Benchmark (~1,300 Scraped Documents)
+### 2. Web Archive Evaluation (~1,300 Documents)
 
-Evaluated on real-world scraped web archives across 5 major Hmar/Zo web publishers:
+Evaluated on scraped web documents from 5 Hmar/Zo web publishers:
 
-| Publisher Web Archive | Corpus Source / Format | Evaluated Items | Hmar Posts Detected (%) | English Posts Detected (%) | Other / Mixed Posts (%) | Avg Hmar Confidence | Mean Casual Hmar Ratio | Mean Formal Hmar Ratio | Mean Unknown Words Ratio | Primary Content Profile |
+| Publisher Web Archive | Corpus Source / Format | Evaluated Items | Hmar Posts (%) | English Posts (%) | Other / Mixed Posts (%) | Avg Hmar Confidence | Mean Casual Hmar Ratio | Mean Formal Hmar Ratio | Mean Unknown Words Ratio | Primary Content Profile |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **L. Keivom Archive** (`keivom`) | Blogger API JSON | 300 | **199 (66.3%)** | 32 (10.7%) | 69 (23.0%) | **0.8320** | **79.3%** | 70.0% | 20.7% | Authentic Hmar literary essays & prose |
+| **L. Keivom Archive** (`keivom`) | Blogger API JSON | 300 | **199 (66.3%)** | 32 (10.7%) | 69 (23.0%) | **0.8320** | **79.3%** | 70.0% | 20.7% | Hmar literary essays & prose |
 | **Inpui Journal** (`inpui`) | Blogger API JSON | 291 | **124 (42.6%)** | 67 (23.0%) | 100 (34.4%) | **0.7400** | **63.7%** | 55.7% | 36.3% | Bilingual news journal & opinion pieces |
 | **HSA Portal** (`hsa`) | WordPress API JSON | 177 | **23 (13.0%)** | 38 (21.5%) | **116 (65.5%)** | 0.5730 | **53.7%** | 46.7% | 46.3% | Student association alerts & mixed posts |
 | **Hmarram.com** (`hmarram`) | WordPress API JSON | 235 | 12 (5.1%) | **209 (88.9%)** | 14 (6.0%) | 0.7762 | 31.2% | 23.8% | 68.8% | Tech articles & English press releases |
 | **Virthli News** (`virthli`) | Scraped Raw HTML | 296 | 5 (1.7%) | **267 (90.2%)** | 24 (8.1%) | 0.8721 | 17.6% | 13.4% | 82.4% | Employment alerts & exam guidelines |
 
-- **Literary Archives:** Archives like L. Keivom and Inpui Journal feature rich Hmar prose and opinion articles, achieving high Hmar classification rates ($42.6\% - 66.3\%$) and high token ratios ($63.7\% - 79.3\%$).
-- **Community News & Recruitment Notices:** Community portals like Hmarram and Virthli publish predominantly in English (recruitment notices, exam guidelines, press statements). `hmaraniam` accurately tags these as `"english"` or `"other"` without false-positive over-classification.
+- **Literary Archives:** Sites like L. Keivom and Inpui Journal contain Hmar prose, resulting in higher Hmar classification rates (42%–66%).
+- **Community News & Job Alerts:** Portals like Hmarram and Virthli publish mostly recruitment notices and exam guidelines in English, which classify as `"english"` or `"other"`.
 
 ---
 
 ## Error Handling
 
-`hmaraniam` provides clear, descriptive error messages:
+`hmaraniam` raises standard Python exceptions:
 
 ```python
 import hmaraniam
@@ -239,4 +237,3 @@ except TypeError as e:
 ## License
 
 Published under the MIT License by the **Hmar Heritage Project**.
-

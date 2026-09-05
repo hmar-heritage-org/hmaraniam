@@ -1,5 +1,5 @@
 """
-hmaraniam - High-precision language identification for Hmar.
+hmaraniam - Language identification library for Hmar.
 "Hmar a ni am?" -> "Is it Hmar?"
 
 Pure string language identification engine.

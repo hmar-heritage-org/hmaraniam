@@ -14,11 +14,11 @@ HELP_TOPICS = {
 hmaraniam HELP: INPUT FORMATS, CONCRETE EXAMPLES & BOUNDARIES
 ================================================================================
 
-hmaraniam distinguishes between DETERMINISTIC 1-TOKEN-PER-ROW INPUTS (Recommended)
+hmaraniam distinguishes between DETERMINISTIC 1-TOKEN-PER-ROW INPUTS
 and NON-PARSED RAW TEXT DOCUMENTS (Convenience Fallback).
 
 --------------------------------------------------------------------------------
-1. DETERMINISTIC 1-TOKEN-PER-ROW INPUTS (Recommended Gold Standard)
+1. DETERMINISTIC 1-TOKEN-PER-ROW INPUTS
 --------------------------------------------------------------------------------
 Preserves exact token boundaries without internal engine guessing or re-tokenization.
 Ideal for distinguishing orthographic variants like "mithiem-hai" vs "mithiem hai".
@@ -191,7 +191,7 @@ hmaraniam HELP: PROJECT INFO & DATASET RESOURCES
 
 
 def print_main_help():
-    print(f"""hmaraniam {__version__} - High-precision language identification engine for Hmar.
+    print(f"""hmaraniam {__version__} - Zero-dependency language identification engine for Hmar.
 
 USAGE:
   hmaraniam [options] [input]
@@ -242,7 +242,7 @@ def main():
 
     parser = argparse.ArgumentParser(
         prog="hmaraniam",
-        description="hmaraniam - High-precision language identification engine for Hmar ('Hmar a ni am?').",
+        description="hmaraniam - Zero-dependency language identification engine for Hmar ('Hmar a ni am?').",
         add_help=False
     )
     parser.add_argument("-h", "--help", action="store_true", help="Show help sitemap and exit")

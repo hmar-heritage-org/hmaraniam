@@ -131,7 +131,7 @@ class Detector:
     """
     Hmar Language Identification Detector Engine.
     
-    Provides high-precision, dual-lens language detection for clean Hmar text strings,
+    Provides dual-lens language detection for Hmar text strings,
     distinguishing Hmar from English and sibling Zo (Kuki-Chin) languages.
     """
 
