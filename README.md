@@ -19,6 +19,14 @@
 
 ---
 
+## Design Principles
+
+- **Language Identification vs. Spell Correction:** `hmaraniam` objectively evaluates vocabulary identity (*"Is this text Hmar?"*). It is not a spell checker or proofreading tool and does not make opinionated, un-empirical assumptions to "correct" typos, accent slash variations (e.g., acute `á` vs grave `à` vs circumflex `â`), or non-standard mobile keyboard codepoints (e.g. `ṭ` vs `ţ` vs `ț`).
+- **ASCII Normalization (`casual_hmar_ratio`) as Universal Ground Truth:** Because mobile keyboards and digital writers output diverse accent/slash codepoints, ASCII normalization (`strip_diacritics`) is the only deterministic, device-agnostic strategy to evaluate vocabulary identity across all platforms without font-dependency risks.
+- **Deterministic 1-Token-Per-Row Boundaries:** To avoid engine-level guessing on orthographic variants (e.g. hyphenated `"mithiem-hai"`, spaced `"mithiem hai"`, or compound `"mithiemhai"`), `hmaraniam` natively evaluates 1-token-per-row inputs (JSON, CSV, line-delimited TXT, Python Lists) with zero internal mutation.
+
+---
+
 ## Installation
 
 ```bash
