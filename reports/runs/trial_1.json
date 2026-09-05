@@ -22,7 +22,7 @@
         "avg_words": 7.97,
         "mean_hmar_conf": 0.19514900000000002,
         "mean_casual_ratio": 61.833499999999994,
-        "stopword_hit_rate": 18.0,
+        "stopword_hit_rate": 43.0,
         "mean_unknown_ratio": 38.1665
       },
       "Hmar (CLB)": {
@@ -77,7 +77,7 @@
         "avg_words": 9.8,
         "mean_hmar_conf": 0.011207,
         "mean_casual_ratio": 39.8032,
-        "stopword_hit_rate": 41.0,
+        "stopword_hit_rate": 69.0,
         "mean_unknown_ratio": 60.1968
       },
       "Thadou (BSI)": {
@@ -88,7 +88,7 @@
         "avg_words": 6.81,
         "mean_hmar_conf": 0.0017480000000000002,
         "mean_casual_ratio": 19.9504,
-        "stopword_hit_rate": 28.999999999999996,
+        "stopword_hit_rate": 49.0,
         "mean_unknown_ratio": 80.0496
       },
       "Vaiphei (BSI)": {
@@ -99,7 +99,7 @@
         "avg_words": 8.53,
         "mean_hmar_conf": 0.08267899999999999,
         "mean_casual_ratio": 52.5266,
-        "stopword_hit_rate": 34.0,
+        "stopword_hit_rate": 57.99999999999999,
         "mean_unknown_ratio": 47.4734
       },
       "Zou (BSI)": {
@@ -110,7 +110,7 @@
         "avg_words": 9.42,
         "mean_hmar_conf": 0.019735,
         "mean_casual_ratio": 40.6409,
-        "stopword_hit_rate": 42.0,
+        "stopword_hit_rate": 71.0,
         "mean_unknown_ratio": 59.3591
       }
     },
@@ -134,7 +134,7 @@
         "avg_words": 25.475,
         "mean_hmar_conf": 0.19312500000000002,
         "mean_casual_ratio": 62.689125000000004,
-        "stopword_hit_rate": 45.0,
+        "stopword_hit_rate": 82.5,
         "mean_unknown_ratio": 37.310874999999996
       },
       "Hmar (CLB)": {
@@ -189,7 +189,7 @@
         "avg_words": 20.175,
         "mean_hmar_conf": 0.0015400000000000001,
         "mean_casual_ratio": 40.153125,
-        "stopword_hit_rate": 70.0,
+        "stopword_hit_rate": 91.25,
         "mean_unknown_ratio": 59.846875
       },
       "Thadou (BSI)": {
@@ -200,7 +200,7 @@
         "avg_words": 16.475,
         "mean_hmar_conf": 0.0,
         "mean_casual_ratio": 21.03425,
-        "stopword_hit_rate": 62.5,
+        "stopword_hit_rate": 82.5,
         "mean_unknown_ratio": 78.96575
       },
       "Vaiphei (BSI)": {
@@ -211,7 +211,7 @@
         "avg_words": 22.2125,
         "mean_hmar_conf": 0.0257425,
         "mean_casual_ratio": 48.628,
-        "stopword_hit_rate": 67.5,
+        "stopword_hit_rate": 95.0,
         "mean_unknown_ratio": 51.37199999999999
       },
       "Zou (BSI)": {
@@ -222,7 +222,7 @@
         "avg_words": 20.275,
         "mean_hmar_conf": 0.00064,
         "mean_casual_ratio": 41.492250000000006,
-        "stopword_hit_rate": 71.25,
+        "stopword_hit_rate": 91.25,
         "mean_unknown_ratio": 58.507749999999994
       }
     },
@@ -246,7 +246,7 @@
         "avg_words": 86.3,
         "mean_hmar_conf": 0.1212475,
         "mean_casual_ratio": 60.985,
-        "stopword_hit_rate": 72.5,
+        "stopword_hit_rate": 97.5,
         "mean_unknown_ratio": 39.015
       },
       "Hmar (CLB)": {
@@ -301,7 +301,7 @@
         "avg_words": 71.15,
         "mean_hmar_conf": 0.0,
         "mean_casual_ratio": 41.6865,
-        "stopword_hit_rate": 95.0,
+        "stopword_hit_rate": 97.5,
         "mean_unknown_ratio": 58.3135
       },
       "Thadou (BSI)": {
@@ -312,7 +312,7 @@
         "avg_words": 58.175,
         "mean_hmar_conf": 0.0,
         "mean_casual_ratio": 21.63025,
-        "stopword_hit_rate": 90.0,
+        "stopword_hit_rate": 95.0,
         "mean_unknown_ratio": 78.36975
       },
       "Vaiphei (BSI)": {
@@ -334,7 +334,7 @@
         "avg_words": 70.475,
         "mean_hmar_conf": 0.0,
         "mean_casual_ratio": 39.73075,
-        "stopword_hit_rate": 95.0,
+        "stopword_hit_rate": 97.5,
         "mean_unknown_ratio": 60.26925000000001
       }
     },
@@ -358,7 +358,7 @@
         "avg_words": 598.3577235772358,
         "mean_hmar_conf": 0.14885081300813008,
         "mean_casual_ratio": 64.19859756097561,
-        "stopword_hit_rate": 97.96747967479675,
+        "stopword_hit_rate": 100.0,
         "mean_unknown_ratio": 35.801402439024386
       },
       "Hmar (CLB)": {
@@ -424,7 +424,7 @@
         "avg_words": 405.9166666666667,
         "mean_hmar_conf": 0.0,
         "mean_casual_ratio": 23.517845528455286,
-        "stopword_hit_rate": 99.79674796747967,
+        "stopword_hit_rate": 100.0,
         "mean_unknown_ratio": 76.48217479674797
       },
       "Vaiphei (BSI)": {
