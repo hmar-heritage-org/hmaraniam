@@ -20,7 +20,7 @@ class TestHmaraniam(unittest.TestCase):
         self.assertIn("non_hmar_words_count", res["scores"])
 
     def test_formal_diacritic_scores(self):
-        sample_text = "Pathien a ṭha, ama chun thil thangkhat a thaw â."
+        sample_text = "Khawvel fe dan phung ei en chun, Pathien a ṭha â, thil lien le mawi a thaw a nih."
         res = detect(sample_text)
         self.assertEqual(res["language"], "hmar")
         self.assertGreater(res["scores"]["hmar_diacritic_words_count"], 0)
@@ -29,7 +29,7 @@ class TestHmaraniam(unittest.TestCase):
         self.assertGreater(res["scores"]["formal_hmar_ratio"], 0.0)
 
     def test_nfd_unicode_diacritics(self):
-        sample_text_nfd = unicodedata.normalize("NFD", "Pathien a ṭha, ama chun thil thangkhat a thaw â.")
+        sample_text_nfd = unicodedata.normalize("NFD", "Khawvel fe dan phung ei en chun, Pathien a ṭha â, thil lien le mawi a thaw a nih.")
         res = detect(sample_text_nfd)
         self.assertEqual(res["language"], "hmar")
         self.assertGreater(res["scores"]["hmar_diacritic_words_count"], 0)
