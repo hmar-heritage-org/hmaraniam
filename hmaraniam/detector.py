@@ -31,7 +31,8 @@ BUNDLED_SIBLING_EXCLUSIVE = PACKAGE_DIR / "data" / "sibling_zo_exclusive.json"
 
 def strip_diacritics(s: str) -> str:
     """Normalize string to plain ASCII representation (ṭ -> t, removing circumflexes)."""
-    s_norm = s.replace("ṭ", "t").replace("Ṭ", "T")
+    s_nfc = unicodedata.normalize("NFC", s)
+    s_norm = s_nfc.replace("ṭ", "t").replace("Ṭ", "T")
     return "".join(c for c in unicodedata.normalize("NFD", s_norm) if unicodedata.category(c) != "Mn")
 
 
@@ -208,7 +209,7 @@ class Detector:
         """Load English and sibling Zo stopwords from bundled data."""
         if BUNDLED_STOPWORDS.exists():
             with open(BUNDLED_STOPWORDS, "r", encoding="utf-8") as f:
-                self.english_stopwords = {w.lower() for w in json.load(f)}
+                self.english_stopwords = {unicodedata.normalize("NFC", w).lower() for w in json.load(f)}
         else:
             self.english_stopwords = {
                 "the", "and", "that", "for", "was", "with", "they", "have", 
@@ -220,12 +221,12 @@ class Detector:
                 raw_data = json.load(f)
                 if isinstance(raw_data, dict):
                     self.sibling_zo_stopwords_by_lang = {
-                        lang: {strip_diacritics(w.lower()) for w in words}
+                        lang: {unicodedata.normalize("NFC", strip_diacritics(w.lower())) for w in words}
                         for lang, words in raw_data.items()
                     }
                     self.sibling_zo_stopwords = set().union(*self.sibling_zo_stopwords_by_lang.values())
                 elif isinstance(raw_data, list):
-                    all_stops = {strip_diacritics(w.lower()) for w in raw_data}
+                    all_stops = {unicodedata.normalize("NFC", strip_diacritics(w.lower())) for w in raw_data}
                     self.sibling_zo_stopwords = all_stops
                     self.sibling_zo_stopwords_by_lang = {"sibling": all_stops}
         else:
@@ -237,7 +238,7 @@ class Detector:
                 excl_data = json.load(f)
                 if isinstance(excl_data, dict):
                     self.sibling_zo_exclusive_by_lang = {
-                        lang: {strip_diacritics(w.lower()) for w in words}
+                        lang: {unicodedata.normalize("NFC", strip_diacritics(w.lower())) for w in words}
                         for lang, words in excl_data.items()
                     }
         else:
@@ -273,7 +274,7 @@ class Detector:
                 accumulated_words.update(words)
 
         if accumulated_words:
-            return {w.lower() for w in accumulated_words}
+            return {unicodedata.normalize("NFC", w).lower() for w in accumulated_words}
         else:
             raise RuntimeError("Failed to load any Hmar unigram shards.")
 
