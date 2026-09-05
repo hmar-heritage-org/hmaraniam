@@ -12,7 +12,7 @@ Maintained by the [Hmar Heritage Foundation](https://hmarheritage.pages.dev) as 
 
 ## Features
 
-- **Fast dictionary lookups:** Uses $O(1)$ set matching backed by **123,064 verified pure Hmar unigrams** with no machine learning dependencies (PyTorch and TensorFlow free).
+- **Fast dictionary lookups:** Uses $O(1)$ set matching backed by **30,640 verified pure Hmar unigrams** with no machine learning dependencies (PyTorch and TensorFlow free).
 - **Dual diacritic scoring:** Reports `casual_hmar_ratio` (ASCII-normalized for standard QWERTY typing) and `formal_hmar_ratio` (exact diacritic matches for formal text).
 - **Specific Sibling Language Resolution:** Distinguishes sibling Zo languages (`mizo`, `paite`, `thadou`, `gangte`, `zou`, `vaiphei`) using dialect-exclusive particles and exclusive vocabulary sets.
 - **Separate confidence scores:** Separates overall classification confidence (`detected_language_confidence`) from Hmar-specific confidence (`hmar_confidence`).
@@ -167,7 +167,7 @@ result = detector.detect("Khawvel fe dan phung...")
 ```python
 from hmaraniam import Detector
 
-# Basic Mode (Default ~123k core unigrams)
+# Basic Mode (Default ~30k core unigrams)
 basic_detector = Detector(mode="basic")
 
 # High Mode (Loads extended unigram shards, falling back to basic if unavailable)
