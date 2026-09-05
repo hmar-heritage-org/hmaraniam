@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
 authors = [
-    { name = "Hmar Heritage Foundation", email = "info@hmarheritage.org" }
+    { name = "Hmar Heritage Foundation", email = "daiopch54@gmail.com" }
 ]
 keywords = [
     "hmar",
