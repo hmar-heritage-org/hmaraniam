@@ -12,7 +12,7 @@ Maintained by the [Hmar Heritage Foundation](https://hmarheritage.pages.dev) as 
 
 ## Features
 
-- **Fast dictionary lookups:** Uses $O(1)$ set matching backed by **37,094 verified pure Hmar unigrams** with no machine learning dependencies (PyTorch and TensorFlow free).
+- **Fast dictionary lookups:** Uses $O(1)$ set matching backed by **37,093 verified pure Hmar unigrams** with no machine learning dependencies (PyTorch and TensorFlow free).
 - **Dual diacritic scoring:** Reports `casual_hmar_ratio` (ASCII-normalized for standard QWERTY typing) and `formal_hmar_ratio` (exact diacritic matches for formal text).
 - **Specific Sibling Language Resolution:** Distinguishes sibling Zo languages (`mizo`, `paite`, `thadou`, `gangte`, `zou`, `vaiphei`) using dialect-exclusive particles and exclusive vocabulary sets.
 - **Separate confidence scores:** Separates overall classification confidence (`detected_language_confidence`) from Hmar-specific confidence (`hmar_confidence`).
@@ -192,7 +192,7 @@ Check out the [`reports/`](./reports) folder for full test results and breakdown
 
 ## Datasets & Repositories
 
-- **[Hmar Unigrams Dataset (`unigrams`)](https://huggingface.co/datasets/hmar-heritage-org/unigrams):** 59,137 verified Hmar surface words and active loanwords generated via `hmaraniam`'s extraction pipeline.
+- **[Hmar Unigrams Dataset (`unigrams`)](https://huggingface.co/datasets/hmar-heritage-org/unigrams):** 58,983 verified Hmar surface words and active loanwords generated via `hmaraniam`'s extraction pipeline.
 - **[Corpus Archive (`corpus-archive`)](https://huggingface.co/datasets/hmar-heritage-org/corpus-archive):** Archival text corpus preserving Hmar literature, lexicons, and parallel Bible datasets.
 
 ---
