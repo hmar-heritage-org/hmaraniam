@@ -3,6 +3,7 @@ Unit tests for hmaraniam pure string/token detector engine.
 """
 
 import unittest
+import unicodedata
 from hmaraniam import Detector, detect
 
 
@@ -26,6 +27,13 @@ class TestHmaraniam(unittest.TestCase):
         self.assertEqual(res["scores"]["non_hmar_diacritic_words_count"], 0)
         self.assertGreater(res["scores"]["total_diacritic_words_count"], 0)
         self.assertGreater(res["scores"]["formal_hmar_ratio"], 0.0)
+
+    def test_nfd_unicode_diacritics(self):
+        sample_text_nfd = unicodedata.normalize("NFD", "Pathien a ṭha, ama chun thil thangkhat a thaw â.")
+        res = detect(sample_text_nfd)
+        self.assertEqual(res["language"], "hmar")
+        self.assertGreater(res["scores"]["hmar_diacritic_words_count"], 0)
+        self.assertEqual(res["scores"]["non_hmar_diacritic_words_count"], 0)
 
     def test_non_hmar_diacritic_isolation(self):
         # "rôle" and "château" are French words with circumflexes, NOT Hmar words

@@ -39,10 +39,11 @@ def load_tokens(input_data: Union[str, List[str], Tuple[str, ...], Path]) -> Lis
     """
     Load clean, deterministic word tokens from structured inputs (JSON array, CSV, line-delimited TXT, or Python List).
     Preserves exact token boundaries without internal guessing.
+    Automatically normalizes Unicode strings (NFD/NFC) to canonical NFC form.
     """
     if isinstance(input_data, (list, tuple)):
         # Pre-tokenized Python list (1 word per item - evaluated "as is")
-        return [str(w).lower().strip() for w in input_data if str(w).strip()]
+        return [unicodedata.normalize("NFC", str(w)).lower().strip() for w in input_data if str(w).strip()]
 
     if isinstance(input_data, (str, Path)):
         s_input = str(input_data)
@@ -74,7 +75,7 @@ def load_tokens(input_data: Union[str, List[str], Tuple[str, ...], Path]) -> Lis
                     raise ValueError(f"Failed to parse JSON file '{s_input}': {e}") from e
                 if not isinstance(data, list):
                     raise ValueError(f"Invalid JSON file '{s_input}': expected a JSON array/list of string tokens [\"token1\", \"token2\", ...]")
-                return [str(w).lower().strip() for w in data if str(w).strip()]
+                return [unicodedata.normalize("NFC", str(w)).lower().strip() for w in data if str(w).strip()]
 
             elif p.suffix == ".csv":
                 import csv
@@ -84,7 +85,7 @@ def load_tokens(input_data: Union[str, List[str], Tuple[str, ...], Path]) -> Lis
                         reader = csv.reader(f)
                         for row in reader:
                             if row:
-                                words.append(row[0].lower().strip())
+                                words.append(unicodedata.normalize("NFC", row[0]).lower().strip())
                 except Exception as e:
                     raise ValueError(f"Failed to parse CSV file '{s_input}': {e}") from e
                 # Drop header row if 'token' or 'word'
@@ -94,28 +95,29 @@ def load_tokens(input_data: Union[str, List[str], Tuple[str, ...], Path]) -> Lis
 
             elif p.suffix == ".txt":
                 with open(p, "r", encoding="utf-8") as f:
-                    content = f.read()
+                    content = unicodedata.normalize("NFC", f.read())
                 # If file contains spaces, tokenize as raw text article; otherwise 1 token per line
                 if re.search(r"[ \t]", content.strip()):
                     cleaned_text = re.sub(r"https?://\S+|www\.\S+", " ", content)
                     cleaned_text = re.sub(r"\b[\w\.-]+@[\w\.-]+\.\w+\b", " ", cleaned_text)
-                    return [w.lower() for w in re.findall(r"\b[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF'-]+\b", cleaned_text)]
+                    return [w.lower() for w in re.findall(r"\b[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF\u0300-\u036F'-]+\b", cleaned_text)]
                 else:
                     lines = content.splitlines()
                     return [line.lower().strip() for line in lines if line.strip()]
 
         # Line-delimited string (1 token per line)
         if isinstance(input_data, str) and "\n" in input_data and not re.search(r"[ \t]", input_data.strip()):
-            lines = input_data.splitlines()
+            lines = unicodedata.normalize("NFC", input_data).splitlines()
             return [line.lower().strip() for line in lines if line.strip()]
 
         # Fallback raw string processing
         if not input_data or not s_input.strip():
             return []
 
-        cleaned_text = re.sub(r"https?://\S+|www\.\S+", " ", s_input)
+        cleaned_text = unicodedata.normalize("NFC", s_input)
+        cleaned_text = re.sub(r"https?://\S+|www\.\S+", " ", cleaned_text)
         cleaned_text = re.sub(r"\b[\w\.-]+@[\w\.-]+\.\w+\b", " ", cleaned_text)
-        return [w.lower() for w in re.findall(r"\b[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF'-]+\b", cleaned_text)]
+        return [w.lower() for w in re.findall(r"\b[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF\u0300-\u036F'-]+\b", cleaned_text)]
 
     raise TypeError(f"Expected input to be a text string, list of tokens, or file path (.json, .csv, .txt), got {type(input_data).__name__}")
 
