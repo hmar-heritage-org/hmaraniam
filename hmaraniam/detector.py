@@ -66,8 +66,15 @@ def load_tokens(input_data: Union[str, List[str], Tuple[str, ...], Path]) -> Lis
                 return [w for w in words if w]
             elif p.suffix == ".txt":
                 with open(p, "r", encoding="utf-8") as f:
-                    lines = f.readlines()
-                return [line.lower().strip() for line in lines if line.strip()]
+                    content = f.read()
+                # If file contains spaces, tokenize as raw text article; otherwise 1 token per line
+                if re.search(r"[ \t]", content.strip()):
+                    cleaned_text = re.sub(r"https?://\S+|www\.\S+", " ", content)
+                    cleaned_text = re.sub(r"\b[\w\.-]+@[\w\.-]+\.\w+\b", " ", cleaned_text)
+                    return [w.lower() for w in re.findall(r"\b[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF'-]+\b", cleaned_text)]
+                else:
+                    lines = content.splitlines()
+                    return [line.lower().strip() for line in lines if line.strip()]
 
         # Line-delimited string (1 token per line)
         if isinstance(input_data, str) and "\n" in input_data and not re.search(r"[ \t]", input_data.strip()):
@@ -114,7 +121,7 @@ class Detector:
         cdn_base_url: Optional[str] = None,
         cache_ttl: int = 86400,  # 24 hours in seconds
         force_remote: bool = False,
-        offline_only: bool = False,
+        offline_only: bool = True,  # Default offline-first (zero network latency)
         custom_unigrams: Optional[Union[List[str], Set[str]]] = None,
         extra_unigrams: Optional[Union[List[str], Set[str]]] = None,
         custom_stopwords: Optional[Union[List[str], Set[str]]] = None,
