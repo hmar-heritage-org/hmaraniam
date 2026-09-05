@@ -45,12 +45,21 @@ def load_tokens(input_data: Union[str, List[str], Tuple[str, ...], Path]) -> Lis
 
     if isinstance(input_data, (str, Path)):
         s_input = str(input_data)
-        p = Path(input_data)
 
-        # Check if the string looks like a file path or extension
-        is_file_like = isinstance(input_data, Path) or s_input.endswith((".json", ".csv", ".txt")) or "/" in s_input or "\\" in s_input
+        is_path_obj = isinstance(input_data, Path)
+        has_file_ext = s_input.endswith((".json", ".csv", ".txt"))
+        
+        is_existing_file = False
+        if not is_path_obj and not has_file_ext:
+            try:
+                is_existing_file = Path(input_data).is_file()
+            except Exception:
+                is_existing_file = False
+
+        is_file_like = is_path_obj or has_file_ext or is_existing_file
 
         if is_file_like:
+            p = Path(input_data)
             if not p.exists():
                 raise FileNotFoundError(f"Input file not found: '{s_input}'")
             if not p.is_file():
@@ -115,10 +124,13 @@ def _resolve_wordlist(data: Optional[Union[List[str], Set[str], Tuple[str, ...],
         return set()
     if isinstance(data, (str, Path)):
         s_data = str(data)
-        p = Path(data)
-        if p.exists() and p.is_file():
-            return {w.lower() for w in load_tokens(p)}
-        if isinstance(data, Path) or s_data.endswith((".json", ".csv", ".txt")) or "/" in s_data or "\\" in s_data:
+        try:
+            p = Path(data)
+            if p.exists() and p.is_file():
+                return {w.lower() for w in load_tokens(p)}
+        except Exception:
+            pass
+        if isinstance(data, Path) or s_data.endswith((".json", ".csv", ".txt")):
             raise FileNotFoundError(f"Custom wordlist file not found: '{s_data}'")
     if isinstance(data, (list, tuple, set)):
         return {str(w).lower().strip() for w in data if str(w).strip()}

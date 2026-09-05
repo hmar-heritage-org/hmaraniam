@@ -123,6 +123,13 @@ class TestHmaraniam(unittest.TestCase):
             self.assertEqual(res_txt["language"], "hmar")
             self.assertEqual(res_txt["scores"]["total_words"], 7)
 
+    def test_slash_inputs_handling(self):
+        # Raw text with URLs, dates, and slash choices should not crash with FileNotFoundError
+        raw_text = "Khawvel fe dan / thuruk on 23/04/2005 and/or visit https://hmarheritage.org"
+        res = detect(raw_text)
+        self.assertIn(res["language"], ["hmar", "english", "other"])
+        self.assertGreater(res["scores"]["total_words"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()
