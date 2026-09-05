@@ -44,26 +44,44 @@ def load_tokens(input_data: Union[str, List[str], Tuple[str, ...], Path]) -> Lis
         return [str(w).lower().strip() for w in input_data if str(w).strip()]
 
     if isinstance(input_data, (str, Path)):
-        # Check if input_data is a path to a file
+        s_input = str(input_data)
         p = Path(input_data)
-        if p.exists() and p.is_file():
+
+        # Check if the string looks like a file path or extension
+        is_file_like = isinstance(input_data, Path) or s_input.endswith((".json", ".csv", ".txt")) or "/" in s_input or "\\" in s_input
+
+        if is_file_like:
+            if not p.exists():
+                raise FileNotFoundError(f"Input file not found: '{s_input}'")
+            if not p.is_file():
+                raise ValueError(f"Path is not a regular file: '{s_input}'")
+
             if p.suffix == ".json":
-                with open(p, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                if isinstance(data, list):
-                    return [str(w).lower().strip() for w in data if str(w).strip()]
+                try:
+                    with open(p, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                except json.JSONDecodeError as e:
+                    raise ValueError(f"Failed to parse JSON file '{s_input}': {e}") from e
+                if not isinstance(data, list):
+                    raise ValueError(f"Invalid JSON file '{s_input}': expected a JSON array/list of string tokens [\"token1\", \"token2\", ...]")
+                return [str(w).lower().strip() for w in data if str(w).strip()]
+
             elif p.suffix == ".csv":
                 import csv
                 words = []
-                with open(p, "r", encoding="utf-8") as f:
-                    reader = csv.reader(f)
-                    for row in reader:
-                        if row:
-                            words.append(row[0].lower().strip())
+                try:
+                    with open(p, "r", encoding="utf-8") as f:
+                        reader = csv.reader(f)
+                        for row in reader:
+                            if row:
+                                words.append(row[0].lower().strip())
+                except Exception as e:
+                    raise ValueError(f"Failed to parse CSV file '{s_input}': {e}") from e
                 # Drop header row if 'token' or 'word'
                 if words and words[0] in ["token", "word", "tokens", "words"]:
                     words = words[1:]
                 return [w for w in words if w]
+
             elif p.suffix == ".txt":
                 with open(p, "r", encoding="utf-8") as f:
                     content = f.read()
@@ -82,23 +100,26 @@ def load_tokens(input_data: Union[str, List[str], Tuple[str, ...], Path]) -> Lis
             return [line.lower().strip() for line in lines if line.strip()]
 
         # Fallback raw string processing
-        if not input_data or not str(input_data).strip():
+        if not input_data or not s_input.strip():
             return []
 
-        cleaned_text = re.sub(r"https?://\S+|www\.\S+", " ", str(input_data))
+        cleaned_text = re.sub(r"https?://\S+|www\.\S+", " ", s_input)
         cleaned_text = re.sub(r"\b[\w\.-]+@[\w\.-]+\.\w+\b", " ", cleaned_text)
         return [w.lower() for w in re.findall(r"\b[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF'-]+\b", cleaned_text)]
+
+    raise TypeError(f"Expected input to be a text string, list of tokens, or file path (.json, .csv, .txt), got {type(input_data).__name__}")
 
 def _resolve_wordlist(data: Optional[Union[List[str], Set[str], Tuple[str, ...], str, Path]]) -> Set[str]:
     """Resolve wordlist from Python sequences, sets, or file paths (.json, .csv, .txt)."""
     if not data:
         return set()
     if isinstance(data, (str, Path)):
+        s_data = str(data)
         p = Path(data)
         if p.exists() and p.is_file():
             return {w.lower() for w in load_tokens(p)}
-        if isinstance(data, str) and (data.endswith((".json", ".csv", ".txt")) or "/" in data or "\\" in data):
-            return set()
+        if isinstance(data, Path) or s_data.endswith((".json", ".csv", ".txt")) or "/" in s_data or "\\" in s_data:
+            raise FileNotFoundError(f"Custom wordlist file not found: '{s_data}'")
     if isinstance(data, (list, tuple, set)):
         return {str(w).lower().strip() for w in data if str(w).strip()}
     if isinstance(data, str):

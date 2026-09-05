@@ -270,21 +270,25 @@ def main():
         print_main_help()
         sys.exit(0)
 
-    detector = Detector(
-        mode=args.mode,
-        offline_only=args.offline,
-        custom_unigrams=args.custom_unigrams,
-        extra_unigrams=args.extra_unigrams,
-        custom_stopwords=args.custom_stopwords,
-        disable_default_stopwords=args.no_default_stopwords
-    )
+    try:
+        detector = Detector(
+            mode=args.mode,
+            offline_only=args.offline,
+            custom_unigrams=args.custom_unigrams,
+            extra_unigrams=args.extra_unigrams,
+            custom_stopwords=args.custom_stopwords,
+            disable_default_stopwords=args.no_default_stopwords
+        )
 
-    result = detector.detect(input_data)
+        result = detector.detect(input_data)
 
-    if args.compact:
-        print(json.dumps(result, separators=(",", ":")))
-    else:
-        print(json.dumps(result, indent=2))
+        if args.compact:
+            print(json.dumps(result, separators=(",", ":")))
+        else:
+            print(json.dumps(result, indent=2))
+    except (FileNotFoundError, ValueError, TypeError) as e:
+        sys.stderr.write(f"Error: {e}\n")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
