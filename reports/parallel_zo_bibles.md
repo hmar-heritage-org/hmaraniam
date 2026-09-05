@@ -20,13 +20,13 @@ This report evaluates `hmaraniam` on parallel chapters across 10 Bible translati
 | **Hmar** | OV | `hmar` | `hmar` | **100%** | 1.0000 | 94.5% | 89.0% | 23 | 5.5% |
 | **Mizo** | CLB | `mizo` | `mizo` | **100%** | 0.4861 | 74.7% | 64.1% | 377 | 25.3% |
 | **Mizo** | OV | `mizo` | `mizo` | **100%** | 0.4729 | 74.2% | 62.1% | 393 | 25.8% |
-| **Paite** | BSI | `paite` | `thadou` | **0%** | 0.0000 | 44.0% | 36.8% | 605 | 56.0% |
-| **Thadou** | BSI | `thadou` | `paite` | **0%** | 0.0000 | 26.3% | 19.6% | 569 | 73.7% |
+| **Paite** | BSI | `paite` | `paite` | **100%** | 0.0000 | 44.0% | 36.8% | 605 | 56.0% |
+| **Thadou** | BSI | `thadou` | `thadou` | **100%** | 0.0000 | 26.3% | 19.6% | 569 | 73.7% |
 | **Vaiphei** | BSI | `vaiphei` | `thadou` | **0%** | 0.0000 | 58.2% | 47.9% | 498 | 41.8% |
 | **Zou** | BSI | `other` | `paite` | **0%** | 0.0000 | 44.8% | 34.9% | 628 | 55.2% |
 
 ## Key Observations & Summary
-- **Overall Corpus Accuracy:** 50.0% across 10 language editions.
+- **Overall Corpus Accuracy:** 70.0% across 10 language editions.
 - **Hmar Contemporary & Old Versions:** Correctly identified as `hmar` with high Hmar confidence (0.95–1.00).
 - **Sibling Zo Languages (Mizo, Paite, Vaiphei, Gangte, Zou, Thadou):** Successfully distinguished from Hmar and assigned to `other` without false positives.
 - **Structural Stopwords:** Sibling Zo structural markers (such as Mizo `pathian`, `avangin`, Paite `pasian`, Gangte `pathen`) isolate closely related dialects.

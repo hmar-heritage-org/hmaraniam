@@ -26,6 +26,7 @@ PACKAGE_DIR = Path(__file__).parent
 BUNDLED_SHARDS_DIR = PACKAGE_DIR / "data" / "shards"
 BUNDLED_STOPWORDS = PACKAGE_DIR / "data" / "stopwords.json"
 BUNDLED_SIBLING_STOPWORDS = PACKAGE_DIR / "data" / "sibling_zo_stopwords.json"
+BUNDLED_SIBLING_EXCLUSIVE = PACKAGE_DIR / "data" / "sibling_zo_exclusive.json"
 
 
 def strip_diacritics(s: str) -> str:
@@ -175,6 +176,7 @@ class Detector:
         self.english_stopwords: Set[str] = set()
         self.sibling_zo_stopwords: Set[str] = set()
         self.sibling_zo_stopwords_by_lang: Dict[str, Set[str]] = {}
+        self.sibling_zo_exclusive_by_lang: Dict[str, Set[str]] = {}
 
         # 1. Load Stopwords
         if not disable_default_stopwords:
@@ -227,6 +229,17 @@ class Detector:
         else:
             self.sibling_zo_stopwords = set()
             self.sibling_zo_stopwords_by_lang = {}
+
+        if BUNDLED_SIBLING_EXCLUSIVE.exists():
+            with open(BUNDLED_SIBLING_EXCLUSIVE, "r", encoding="utf-8") as f:
+                excl_data = json.load(f)
+                if isinstance(excl_data, dict):
+                    self.sibling_zo_exclusive_by_lang = {
+                        lang: {strip_diacritics(w.lower()) for w in words}
+                        for lang, words in excl_data.items()
+                    }
+        else:
+            self.sibling_zo_exclusive_by_lang = {}
 
     def _get_shard_filenames(self) -> List[str]:
         """Determine which shard filenames to load based on mode."""
@@ -343,16 +356,24 @@ class Detector:
         eng_stop_matches = sum(1 for w in words if w in self.english_stopwords)
         sibling_zo_matches = sum(1 for w in words if strip_diacritics(w) in self.sibling_zo_stopwords)
 
-        # Count sibling stopword hits per specific language
-        sibling_lang_counts: Dict[str, int] = {}
-        for lang_code, stop_set in self.sibling_zo_stopwords_by_lang.items():
-            cnt = sum(1 for w in words if strip_diacritics(w) in stop_set)
-            if cnt > 0:
-                sibling_lang_counts[lang_code] = cnt
+        # Count sibling stopword hits and exclusive wordlist hits per specific language
+        sibling_lang_scores: Dict[str, float] = {}
+        all_langs = set(self.sibling_zo_stopwords_by_lang.keys()) | set(self.sibling_zo_exclusive_by_lang.keys())
+
+        for lang_code in all_langs:
+            stop_set = self.sibling_zo_stopwords_by_lang.get(lang_code, set())
+            excl_set = self.sibling_zo_exclusive_by_lang.get(lang_code, set())
+
+            stop_cnt = sum(1 for w in words if strip_diacritics(w) in stop_set)
+            excl_cnt = sum(1 for w in words if strip_diacritics(w) in excl_set)
+
+            combined_score = (stop_cnt * 3.0) + excl_cnt
+            if combined_score > 0:
+                sibling_lang_scores[lang_code] = combined_score
 
         best_sibling_lang = None
-        if sibling_lang_counts:
-            best_sibling_lang = max(sibling_lang_counts, key=sibling_lang_counts.get)
+        if sibling_lang_scores:
+            best_sibling_lang = max(sibling_lang_scores, key=sibling_lang_scores.get)
 
         # Diacritic breakdown
         hmar_diacritic_words_count = 0
@@ -442,7 +463,7 @@ class Detector:
                 "unknown_words_count": unknown_words_count,
                 "english_stopwords_count": eng_stop_matches,
                 "sibling_zo_stopwords_count": sibling_zo_matches,
-                "sibling_lang_counts": sibling_lang_counts,
+                "sibling_lang_scores": sibling_lang_scores,
                 "hmar_diacritic_words_count": hmar_diacritic_words_count,
                 "non_hmar_diacritic_words_count": non_hmar_diacritic_words_count,
                 "total_diacritic_words_count": total_diacritic_words_count,
