@@ -189,7 +189,7 @@ hmaraniam HELP: PROJECT INFO & DATASET RESOURCES
 - GitHub Repository: https://github.com/hmar-heritage-org/hmaraniam
 - PyPI Package:     https://pypi.org/project/hmaraniam/
 - Open Data CDN:     https://cdn.jsdelivr.net/gh/hmar-heritage-org/hmaraniam@main/hmaraniam/data/
-- License:           MIT License (Hmar Heritage Project)
+- License:           MIT License (Hmar Heritage Foundation)
 """
 }
 

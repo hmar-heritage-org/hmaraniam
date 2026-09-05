@@ -237,4 +237,4 @@ except TypeError as e:
 
 ## License
 
-Published under the MIT License by the **Hmar Heritage Project**.
+Published under the MIT License by the **Hmar Heritage Foundation**.
