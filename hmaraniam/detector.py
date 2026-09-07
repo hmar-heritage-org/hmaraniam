@@ -233,13 +233,25 @@ class Detector:
 
         self.exact_hmar_vocab = set(self.exact_vocab_counts.keys())
 
-        # Build normalized counts dictionary (storing maximum count for stripped diacritic forms)
+        # Build normalized counts dictionary (collapsing diacritics: ṭha + tha)
         norm_counts: Dict[str, int] = {}
         for w, cnt in self.exact_vocab_counts.items():
             nw = strip_diacritics(w)
-            norm_counts[nw] = max(norm_counts.get(nw, 0), cnt)
+            norm_counts[nw] = norm_counts.get(nw, 0) + cnt
         self.normalized_vocab_counts = norm_counts
         self.normalized_hmar_vocab = set(self.normalized_vocab_counts.keys())
+
+        # Build 100-tier dense rank weights for normalized unigrams (10 segments x 10 sub-segments)
+        unique_freqs = sorted(list(set(self.normalized_vocab_counts.values())))
+        num_levels = len(unique_freqs)
+        freq_to_weight = {
+            freq: min(100, int((idx / num_levels) * 100) + 1)
+            for idx, freq in enumerate(unique_freqs)
+        } if num_levels > 0 else {}
+        self.normalized_vocab_weights: Dict[str, int] = {
+            w: freq_to_weight.get(cnt, 1)
+            for w, cnt in self.normalized_vocab_counts.items()
+        }
 
     def _load_stopwords(self) -> None:
         """Load English and sibling Zo stopwords from bundled data."""
@@ -403,24 +415,24 @@ class Detector:
         eng_stop_matches = sum(1 for w in words if w in self.english_stopwords)
         sibling_zo_matches = sum(1 for w in words if strip_diacritics(w) in self.sibling_zo_stopwords)
 
-        # Calculate Log-Frequency Weighted Score with sentence token repetition cap (<= 3)
+        # Calculate 100-Tier Dense Rank Weighted Score with token repetition cap (<= 3)
         word_freq_in_input: Dict[str, int] = {}
-        casual_log_weight = 0.0
-        total_max_log_weight = 0.0
-        TYPICAL_HMAR_WORD_LOG_WEIGHT = 7.0
+        total_token_tier_sum = 0.0
+        capped_tokens_count = 0
 
         for w in words:
             word_freq_in_input[w] = word_freq_in_input.get(w, 0) + 1
             if word_freq_in_input[w] > 3:
                 continue
 
+            capped_tokens_count += 1
             nw = strip_diacritics(w)
-            casual_cnt = self.normalized_vocab_counts.get(nw, 0)
-            c_weight = math.log1p(casual_cnt) if casual_cnt > 0 else 0.0
-            casual_log_weight += c_weight
-            total_max_log_weight += max(c_weight, TYPICAL_HMAR_WORD_LOG_WEIGHT)
+            w_tier = self.normalized_vocab_weights.get(nw, 0)
+            total_token_tier_sum += w_tier
 
-        weighted_casual_hmar_ratio = casual_log_weight / total_max_log_weight if total_max_log_weight > 0 else 0.0
+        # Scale relative to native fluent text baseline (~65.0 out of 100 max)
+        raw_avg_tier = total_token_tier_sum / capped_tokens_count if capped_tokens_count > 0 else 0.0
+        weighted_casual_hmar_ratio = min(1.0, raw_avg_tier / 65.0)
 
         # Count sibling stopword hits and exclusive wordlist hits per specific language
         sibling_lang_scores: Dict[str, float] = {}
@@ -544,7 +556,6 @@ class Detector:
             "hmar_confidence": hmar_confidence,
             "detected_language_confidence": detected_language_confidence,
             "sibling_heuristic": sibling_heuristic,
-            "mode": self.mode,
             "scores": {
                 "casual_hmar_ratio": round(casual_hmar_ratio, 4),
                 "weighted_hmar_ratio": round(weighted_casual_hmar_ratio, 4),
@@ -574,7 +585,6 @@ class Detector:
             "hmar_confidence": 0.0,
             "detected_language_confidence": 0.0,
             "sibling_heuristic": False,
-            "mode": self.mode,
             "scores": {
                 "casual_hmar_ratio": 0.0,
                 "weighted_hmar_ratio": 0.0,

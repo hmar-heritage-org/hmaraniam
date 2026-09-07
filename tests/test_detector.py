@@ -59,7 +59,7 @@ class TestHmaraniam(unittest.TestCase):
         detector = Detector(mode="high", offline_only=True)
         res = detector.detect(sample_text)
         self.assertEqual(res["language"], "hmar")
-        self.assertEqual(res["mode"], "high")
+        self.assertGreaterEqual(res["hmar_confidence"], 0.70)
 
     def test_english_detection(self):
         sample_text = "The quick brown fox jumps over the lazy dog. This is an official notice and document for the public."

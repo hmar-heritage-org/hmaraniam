@@ -52,7 +52,6 @@ pip install hmaraniam
   "hmar_confidence": 0.9842,
   "detected_language_confidence": 0.9842,
   "sibling_heuristic": false,
-  "mode": "basic",
   "scores": {
     "casual_hmar_ratio": 0.9524,
     "weighted_hmar_ratio": 0.9103,

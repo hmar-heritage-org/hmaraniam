@@ -83,7 +83,6 @@ hmaraniam outputs an immutable JSON payload for every classification request:
   "language": "hmar",                     # Primary classification label ("hmar", "english", "other")
   "hmar_confidence": 0.9842,               # Permanent Hmar confidence float [0.0000 - 1.0000]
   "detected_language_confidence": 0.9842,  # Confidence score for the assigned language label
-  "mode": "basic",                        # Active detection mode ("basic" or "high")
   "scores": {
     "casual_hmar_ratio": 0.9524,          # Ratio of tokens matching Hmar vocabulary in plain ASCII
     "formal_hmar_ratio": 0.8095,          # Ratio of tokens matching exact formal Hmar diacritics
