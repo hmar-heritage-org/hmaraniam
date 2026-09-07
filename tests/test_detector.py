@@ -138,7 +138,77 @@ class TestHmaraniam(unittest.TestCase):
         self.assertIn(res["language"], ["hmar", "english", "other"])
         self.assertGreater(res["scores"]["total_words"], 0)
 
+    def test_result_schema_completeness(self):
+        # Both empty and non-empty results must have identical score key sets
+        res_empty = detect("")
+        res_normal = detect("Khawvel fe dan phung ei en chun")
+        self.assertEqual(
+            sorted(res_empty["scores"].keys()),
+            sorted(res_normal["scores"].keys()),
+            "Empty result schema does not match normal result schema"
+        )
+        # Both must contain the frequency-weighted ratio key
+        self.assertIn("weighted_hmar_ratio", res_empty["scores"])
+        self.assertIn("weighted_hmar_ratio", res_normal["scores"])
+        # Both must contain sibling_lang_scores
+        self.assertIn("sibling_lang_scores", res_empty["scores"])
+        self.assertIn("sibling_lang_scores", res_normal["scores"])
+
+    def test_whitespace_only_input(self):
+        # Whitespace-only strings should behave identically to empty string
+        for ws in ["   ", "\t", "\n\n\n", "  \t  \n  "]:
+            res = detect(ws)
+            self.assertEqual(res["language"], "unknown")
+            self.assertEqual(res["scores"]["total_words"], 0)
+            self.assertEqual(res["hmar_confidence"], 0.0)
+
+    def test_single_word_input(self):
+        # Single known Hmar word: should be hmar with low (short-text) confidence
+        res = detect("khawvel")
+        self.assertEqual(res["language"], "hmar")
+        self.assertGreater(res["hmar_confidence"], 0.0)
+        self.assertEqual(res["scores"]["total_words"], 1)
+        self.assertEqual(res["scores"]["hmar_words_count"], 1)
+
+    def test_sibling_language_detection(self):
+        # Mizo — dense exclusive particle markers (avangin, chutichuan, hnenah, buatsaih)
+        mizo_text = "Avangin chutichuan Pathian hnenah buatsaih rawh."
+        res_mizo = detect(mizo_text)
+        self.assertEqual(res_mizo["language"], "mizo")
+        self.assertLess(res_mizo["hmar_confidence"], 0.30)
+
+        # Paite — clear exclusive particle markers (pasian, ahi, toupa, ajehchu)
+        paite_text = "Pasian vualzawlna chu ahi, toupa ajehchu om ta hen."
+        res_paite = detect(paite_text)
+        self.assertEqual(res_paite["language"], "paite")
+        self.assertLess(res_paite["hmar_confidence"], 0.30)
+
+    def test_html_sanitization(self):
+        # HTML-wrapped Hmar text should correctly detect as hmar
+        html_text = "<p><b>Pathien</b> a ṭha â, <em>khawvel fe dan</em> phung ei en chun.</p>"
+        res = detect(html_text)
+        self.assertEqual(res["language"], "hmar")
+        self.assertGreater(res["hmar_confidence"], 0.0)
+
+    def test_markdown_sanitization(self):
+        # Markdown bold/italic/link syntax should not eat Hmar word tokens
+        md_text = "_Pathien_ le **khawvel** fe [dan phung](https://hmar.org) ei en chun."
+        res = detect(md_text)
+        self.assertEqual(res["language"], "hmar")
+        # Pathien and khawvel must still be counted — total words should include them
+        self.assertGreaterEqual(res["scores"]["hmar_words_count"], 4)
+
+    def test_weighted_hmar_ratio_scaling(self):
+        # High-frequency core Hmar text should score high weighted ratio
+        hmar_text = "Khawvel fe dan phung ei en chun, ram le hnam damna thuruk chu lien a nih."
+        res = detect(hmar_text)
+        self.assertGreater(res["scores"]["weighted_hmar_ratio"], 0.50)
+
+        # Pure English text should score near-zero weighted ratio
+        eng_text = "The quick brown fox jumps over the lazy dog and never looks back."
+        res_eng = detect(eng_text)
+        self.assertLess(res_eng["scores"]["weighted_hmar_ratio"], 0.40)
+
 
 if __name__ == "__main__":
     unittest.main()
-

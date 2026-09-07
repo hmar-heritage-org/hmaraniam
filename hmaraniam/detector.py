@@ -47,7 +47,9 @@ def _sanitize_raw_text(text: str) -> str:
     s = re.sub(r"<[^>]+>", " ", s)
     # 3. Unwrap Markdown links and images: ![alt](url) or [link text](url) -> link text
     s = re.sub(r"!?\[([^\]]+)\]\([^)]+\)", r" \1 ", s)
-    # 4. Strip URLs and email addresses
+    # 4. Strip Markdown bold/italic markers (* ** _ __) while preserving the wrapped text
+    s = re.sub(r"[*_]{1,2}([^*_\n]+)[*_]{1,2}", r" \1 ", s)
+    # 5. Strip URLs and email addresses
     s = re.sub(r"https?://\S+|www\.\S+", " ", s)
     s = re.sub(r"\b[\w\.-]+@[\w\.-]+\.\w+\b", " ", s)
     return s
@@ -540,6 +542,7 @@ class Detector:
             "mode": self.mode,
             "scores": {
                 "casual_hmar_ratio": 0.0,
+                "weighted_hmar_ratio": 0.0,
                 "formal_hmar_ratio": 0.0,
                 "english_stopword_ratio": 0.0,
                 "sibling_zo_stopword_ratio": 0.0,
@@ -550,6 +553,7 @@ class Detector:
                 "unknown_words_count": 0,
                 "english_stopwords_count": 0,
                 "sibling_zo_stopwords_count": 0,
+                "sibling_lang_scores": {},
                 "hmar_diacritic_words_count": 0,
                 "non_hmar_diacritic_words_count": 0,
                 "total_diacritic_words_count": 0,
