@@ -174,6 +174,8 @@ class Detector:
         self.cache_ttl = cache_ttl
         self.offline_only = offline_only
 
+        self.exact_vocab_counts: Dict[str, int] = {}
+        self.normalized_vocab_counts: Dict[str, int] = {}
         self.exact_hmar_vocab: Set[str] = set()
         self.normalized_hmar_vocab: Set[str] = set()
         self.english_stopwords: Set[str] = set()
@@ -192,18 +194,28 @@ class Detector:
             else:
                 self.english_stopwords.update(custom_stops)
 
-        # 2. Load Unigrams
+        # 2. Load Unigrams & Frequencies
         if custom_unigrams:
-            exact_words = _resolve_wordlist(custom_unigrams)
+            custom_data = _resolve_wordlist(custom_unigrams)
+            self.exact_vocab_counts = {w: 1 for w in custom_data}
         else:
-            exact_words = self._load_unigram_shards(force_remote=force_remote)
+            self.exact_vocab_counts = self._load_unigram_shards(force_remote=force_remote)
 
         if extra_unigrams:
-            extra_words = _resolve_wordlist(extra_unigrams)
-            exact_words.update(extra_words)
+            extra_data = _resolve_wordlist(extra_unigrams)
+            for w in extra_data:
+                if w not in self.exact_vocab_counts:
+                    self.exact_vocab_counts[w] = 1
 
-        self.exact_hmar_vocab = exact_words
-        self.normalized_hmar_vocab = {strip_diacritics(w) for w in exact_words}
+        self.exact_hmar_vocab = set(self.exact_vocab_counts.keys())
+
+        # Build normalized counts dictionary (storing maximum count for stripped diacritic forms)
+        norm_counts: Dict[str, int] = {}
+        for w, cnt in self.exact_vocab_counts.items():
+            nw = strip_diacritics(w)
+            norm_counts[nw] = max(norm_counts.get(nw, 0), cnt)
+        self.normalized_vocab_counts = norm_counts
+        self.normalized_hmar_vocab = set(self.normalized_vocab_counts.keys())
 
     def _load_stopwords(self) -> None:
         """Load English and sibling Zo stopwords from bundled data."""
@@ -263,26 +275,34 @@ class Detector:
 
         return sorted(list(shard_names))
 
-    def _load_unigram_shards(self, force_remote: bool = False) -> Set[str]:
-        """Load Hmar unigrams vocabulary from shards based on current mode."""
+    def _load_unigram_shards(self, force_remote: bool = False) -> Dict[str, int]:
+        """Load Hmar unigrams vocabulary and frequency counts from shards based on current mode."""
         shard_filenames = self._get_shard_filenames()
-        accumulated_words = set()
+        accumulated_counts: Dict[str, int] = {}
 
         for shard_name in shard_filenames:
-            words = self._load_single_shard(shard_name, force_remote=force_remote)
-            if words:
-                accumulated_words.update(words)
+            shard_data = self._load_single_shard(shard_name, force_remote=force_remote)
+            if shard_data:
+                if isinstance(shard_data, dict):
+                    for w, cnt in shard_data.items():
+                        norm_w = unicodedata.normalize("NFC", str(w)).lower()
+                        accumulated_counts[norm_w] = max(accumulated_counts.get(norm_w, 0), int(cnt))
+                elif isinstance(shard_data, list):
+                    for w in shard_data:
+                        norm_w = unicodedata.normalize("NFC", str(w)).lower()
+                        if norm_w not in accumulated_counts:
+                            accumulated_counts[norm_w] = 1
 
-        if accumulated_words:
-            return {unicodedata.normalize("NFC", w).lower() for w in accumulated_words}
+        if accumulated_counts:
+            return accumulated_counts
         else:
             raise RuntimeError("Failed to load any Hmar unigram shards.")
 
-    def _load_single_shard(self, shard_name: str, force_remote: bool = False) -> Optional[List[str]]:
+    def _load_single_shard(self, shard_name: str, force_remote: bool = False) -> Optional[Union[Dict[str, int], List[str]]]:
         """Load a single unigram shard using CDN, cache, or bundled fallback."""
         cache_path = CACHE_SHARDS_DIR / shard_name
         bundled_path = BUNDLED_SHARDS_DIR / shard_name
-        loaded_data: Optional[List[str]] = None
+        loaded_data: Optional[Union[Dict[str, int], List[str]]] = None
 
         if not self.offline_only:
             if force_remote or self._should_fetch_remote(cache_path):
@@ -353,11 +373,30 @@ class Detector:
         if total_words == 0:
             return self._empty_result()
 
-        # 1. Match Counts
+        # 1. Match Counts & Log-Frequency Weights
         casual_matches = sum(1 for w in words if strip_diacritics(w) in self.normalized_hmar_vocab)
         formal_matches = sum(1 for w in words if w in self.exact_hmar_vocab)
         eng_stop_matches = sum(1 for w in words if w in self.english_stopwords)
         sibling_zo_matches = sum(1 for w in words if strip_diacritics(w) in self.sibling_zo_stopwords)
+
+        # Calculate Log-Frequency Weighted Score with sentence token repetition cap (<= 3)
+        word_freq_in_input: Dict[str, int] = {}
+        casual_log_weight = 0.0
+        total_max_log_weight = 0.0
+        TYPICAL_HMAR_WORD_LOG_WEIGHT = 7.0
+
+        for w in words:
+            word_freq_in_input[w] = word_freq_in_input.get(w, 0) + 1
+            if word_freq_in_input[w] > 3:
+                continue
+
+            nw = strip_diacritics(w)
+            casual_cnt = self.normalized_vocab_counts.get(nw, 0)
+            c_weight = math.log1p(casual_cnt) if casual_cnt > 0 else 0.0
+            casual_log_weight += c_weight
+            total_max_log_weight += max(c_weight, TYPICAL_HMAR_WORD_LOG_WEIGHT)
+
+        weighted_casual_hmar_ratio = casual_log_weight / total_max_log_weight if total_max_log_weight > 0 else 0.0
 
         # Count sibling stopword hits and exclusive wordlist hits per specific language
         sibling_lang_scores: Dict[str, float] = {}
@@ -401,13 +440,15 @@ class Detector:
         eng_stop_ratio = eng_stop_matches / total_words
         sibling_zo_ratio = sibling_zo_matches / total_words
 
+        effective_hmar_ratio = max(casual_hmar_ratio, weighted_casual_hmar_ratio)
+
         # 3. Classification Logic
         sibling_heuristic = False
-        if eng_stop_ratio >= 0.025 and casual_hmar_ratio < 0.40:
+        if eng_stop_ratio >= 0.025 and effective_hmar_ratio < 0.40:
             language = "english"
-        elif casual_hmar_ratio >= 0.82 and unknown_words_ratio <= 0.18:
+        elif effective_hmar_ratio >= 0.82 and unknown_words_ratio <= 0.18:
             language = "hmar"
-        elif casual_hmar_ratio >= 0.70 and eng_stop_ratio < 0.01 and non_hmar_diacritic_words_count == 0:
+        elif effective_hmar_ratio >= 0.70 and eng_stop_ratio < 0.01 and non_hmar_diacritic_words_count == 0:
             language = "hmar"
         elif eng_stop_ratio >= 0.02:
             language = "english"
@@ -423,7 +464,7 @@ class Detector:
 
         # 4a. Permanent Hmar Confidence (Answers: "How confident are we that this text is Hmar?")
         # Penalizes high unknown_words_ratio and English stopwords
-        hmar_signal = max(0.0, casual_hmar_ratio - (unknown_words_ratio * 1.5) - (eng_stop_ratio * 3.0))
+        hmar_signal = max(0.0, effective_hmar_ratio - (unknown_words_ratio * 1.5) - (eng_stop_ratio * 3.0))
         hmar_conf_raw = min(1.0, hmar_signal / 0.75) * len_weight
         hmar_confidence = round(min(1.0, max(0.0, hmar_conf_raw)), 4)
 
@@ -431,7 +472,7 @@ class Detector:
         if language == "hmar":
             detected_language_confidence = hmar_confidence
         elif language == "english":
-            eng_signal = max(0.0, eng_stop_ratio - (casual_hmar_ratio / 5.0))
+            eng_signal = max(0.0, eng_stop_ratio - (effective_hmar_ratio / 5.0))
             eng_conf_raw = min(1.0, eng_signal / 0.04) * len_weight
             detected_language_confidence = round(min(1.0, max(0.0, eng_conf_raw)), 4)
         elif sibling_heuristic or language == "other":
@@ -456,6 +497,7 @@ class Detector:
             "mode": self.mode,
             "scores": {
                 "casual_hmar_ratio": round(casual_hmar_ratio, 4),
+                "weighted_hmar_ratio": round(weighted_casual_hmar_ratio, 4),
                 "formal_hmar_ratio": round(formal_hmar_ratio, 4),
                 "english_stopword_ratio": round(eng_stop_ratio, 4),
                 "sibling_zo_stopword_ratio": round(sibling_zo_ratio, 4),
