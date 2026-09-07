@@ -1,10 +1,10 @@
-# hmaraniam 🇲z
+# hmaraniam
 
-**Zero-dependency language identification library for Hmar.**
+**Zero-dependency language identification for Hmar.**
 
-> *"Hmar a ni am?"* — *"Is it Hmar?"*
+> *"Hmar a ni am?" ("Is it Hmar?")*
 
-`hmaraniam` is a lightweight, zero-dependency Python library that identifies Hmar text and cleanly distinguishes it from English and related Kuki-Chin / Zo languages (Mizo, Paite, Thadou, Vaiphei, Gangte, Zou).
+`hmaraniam` is a Python library that identifies Hmar text and tells it apart from English and the related Kuki-Chin / Zo languages (Mizo, Paite, Thadou, Vaiphei, Gangte, Zou).
 
 Maintained by the [Hmar Heritage Foundation](https://hmarheritage.pages.dev) as part of the Hmar Heritage Archival Project.
 
@@ -12,24 +12,27 @@ Maintained by the [Hmar Heritage Foundation](https://hmarheritage.pages.dev) as 
 
 ## Features
 
-- **Frequency-weighted detection:** Scores each token using corpus log-frequencies (`log(1 + count)`) compiled from 2 Hmar Bibles and 583 verified web articles — **45,042 unigrams** with real-world frequency data. Core structural words (`chu`, `chun`, `an`) carry maximum signal; rare or loanwords carry proportionally lower weight.
-- **Dual diacritic scoring:** Reports `casual_hmar_ratio` (ASCII-normalized for standard QWERTY typing) and `formal_hmar_ratio` (exact diacritic matches for formal text).
-- **Sibling Zo language resolution:** Distinguishes sibling Zo languages (`mizo`, `paite`, `thadou`, `gangte`, `zou`, `vaiphei`) using dialect-exclusive particles and per-language exclusive vocabulary sets.
-- **Separate confidence scores:** Separates overall classification confidence (`detected_language_confidence`) from Hmar-specific confidence (`hmar_confidence`).
-- **Consistent JSON output:** Returns the same dictionary structure for every call, including word counts, frequency-weighted ratios, sibling scores, and diacritic breakdowns.
-- **QOL text sanitization:** Automatically strips HTML tags, Markdown syntax (bold, italic, links, code blocks), URLs, and email addresses from raw pasted input before token evaluation.
-- **Custom unigrams & stopwords:** Pass custom unigram sets, extra domain vocabulary, or custom stopword lists.
-- **Offline & CDN dataset loading:** Syncs unigram sets via jsDelivr CDN with local disk caching and bundled offline fallbacks.
-- **Zero dependencies:** Pure Python standard library. No PyTorch, TensorFlow, NumPy, or spaCy required.
+- **Frequency-weighted detection:** Scores each token using corpus log-frequencies (`log(1 + count)`) built from 2 Hmar Bibles and 583 verified web articles, covering 45,042 unigrams. Core structural words like `chu`, `chun`, and `an` score higher than rare or loanword tokens.
+- **Dual diacritic scoring:** Reports `casual_hmar_ratio` (ASCII-normalized for QWERTY typing) and `formal_hmar_ratio` (exact diacritic matches).
+- **Sibling Zo language resolution:** Separates Mizo, Paite, Thadou, Gangte, Zou, and Vaiphei from Hmar using dialect-exclusive particles and per-language vocabulary lists.
+- **Separate confidence scores:** `hmar_confidence` answers "how Hmar is this text?" independently of `detected_language_confidence`, which rates the overall classification call.
+- **Consistent output shape:** Every call returns the same dictionary structure, including word counts, frequency-weighted ratios, sibling scores, and diacritic breakdowns.
+- **Raw text cleanup:** Strips HTML tags, Markdown syntax (bold, italic, links, code blocks), URLs, and email addresses from pasted input before scoring.
+- **Custom vocabulary:** Pass custom unigram sets, extra domain words, or custom stopword lists directly to the `Detector`.
+- **Offline first:** Ships with a bundled shard so it works without a network call. CDN sync via jsDelivr is available when you need the latest data.
+- **Zero dependencies:** Pure Python standard library. No PyTorch, TensorFlow, NumPy, or spaCy.
 
 ---
 
-## Design Principles
+## Design
 
-- **Language ID vs. Spell Correction:** `hmaraniam` measures vocabulary identity (*"Is this text Hmar?"*). It is not a spell checker and does not modify typos, character variants (acute `á`, grave `à`, circumflex `â`), or mobile keyboard codepoints (`ṭ` vs `ţ`).
-- **ASCII Normalization (`casual_hmar_ratio`):** Mobile keyboards produce varying accent codepoints. Stripping diacritics (`strip_diacritics`) allows consistent vocabulary evaluation across devices.
-- **1-Token-Per-Row Boundaries:** To evaluate hyphenated (`mithiem-hai`), spaced (`mithiem hai`), or compound (`mithiemhai`) terms directly, `hmaraniam` accepts 1-token-per-row inputs (JSON, CSV, TXT, Python lists) without re-tokenizing.
-- **Vocabulary Identity vs. Grammar:** `hmaraniam` measures dictionary presence and token overlap, not syntax or semantics. A random sequence of valid Hmar words yields a high vocabulary score regardless of grammatical structure.
+`hmaraniam` answers one question: *"Is this text Hmar?"* It does not correct spelling or modify the input.
+
+**Diacritic normalization.** Mobile keyboards produce inconsistent accent codepoints. `casual_hmar_ratio` strips diacritics before matching so `ṭha` and `tha` both score against the same vocabulary entry.
+
+**Token boundaries.** When you need precise control over how a token is defined (for example, whether `mithiem-hai` counts as one word or two), pass a pre-tokenized list. The library will not re-split it. For plain strings, it tokenizes by word boundary.
+
+**Vocabulary, not grammar.** The score reflects dictionary overlap, not sentence structure. A list of valid Hmar words scores the same as a grammatical sentence with the same words.
 
 ---
 
@@ -41,7 +44,7 @@ pip install hmaraniam
 
 ---
 
-## Output Schema
+## Output schema
 
 ```json
 {
@@ -75,7 +78,7 @@ pip install hmaraniam
 
 ## Usage
 
-### Quick Start
+### Quick start
 
 ```python
 import hmaraniam
@@ -87,13 +90,13 @@ result = hmaraniam.detect(sample_text)
 print(result)
 ```
 
-### 1-Token-Per-Row Inputs
+### Pre-tokenized inputs
 
-When token boundaries are pre-defined (such as distinguishing `"mithiem-hai"` vs `"mithiem hai"` vs `"mithiemhai"`), `hmaraniam` evaluates 1-token-per-row inputs without internal re-tokenization:
+If you need to define token boundaries yourself (for example, to treat `mithiem-hai` as a single token rather than two words), pass a list, JSON file, CSV, or line-delimited TXT. The library scores each entry as-is without re-splitting.
 
-#### Expected File Formats & Code Examples
+#### Supported formats
 
-1. **JSON Array File (`tokens.json`):**
+1. **JSON array (`tokens.json`):**
    ```json
    [
      "khawvel",
@@ -106,7 +109,7 @@ When token boundaries are pre-defined (such as distinguishing `"mithiem-hai"` vs
    ```
    *Usage:* `hmaraniam.detect("tokens.json")` or CLI `hmaraniam tokens.json`
 
-2. **CSV File (`tokens.csv`):**
+2. **CSV (`tokens.csv`):**
    ```csv
    token
    khawvel
@@ -118,7 +121,7 @@ When token boundaries are pre-defined (such as distinguishing `"mithiem-hai"` vs
    ```
    *Usage:* `hmaraniam.detect("tokens.csv")` or CLI `hmaraniam tokens.csv`
 
-3. **Line-Delimited TXT File (`tokens.txt` - 1 word per line):**
+3. **Line-delimited TXT (`tokens.txt`, 1 word per line):**
    ```text
    khawvel
    fe
@@ -129,7 +132,7 @@ When token boundaries are pre-defined (such as distinguishing `"mithiem-hai"` vs
    ```
    *Usage:* `hmaraniam.detect("tokens.txt")` or CLI `hmaraniam tokens.txt`
 
-4. **Python List (`List[str]`):**
+4. **Python list:**
    ```python
    tokens = ["mithiem-hai", "pathien", "hnenah", "khawvel"]
    result = hmaraniam.detect(tokens)
@@ -137,19 +140,19 @@ When token boundaries are pre-defined (such as distinguishing `"mithiem-hai"` vs
 
 ---
 
-### Un-tokenized Raw Text Documents
+### Raw text
 
-For raw text files or strings (`article.txt`, raw text string, or stdin pipe), `hmaraniam` extracts word tokens using word-boundary regex matching:
+Pass a plain string or a `.txt` file path and the library tokenizes it automatically. HTML, Markdown, and URLs are stripped before scoring.
 
 ```python
-# Raw text string evaluation
+# Raw text string
 result = hmaraniam.detect("Khawvel fe dan phung ei en chun, ram le hnam damna thuruk...")
 
-# Raw text article file evaluation
+# Raw text file
 result = hmaraniam.detect("path/to/article.txt")
 ```
 
-### Custom Unigrams & Stopwords
+### Custom unigrams and stopwords
 
 ```python
 from hmaraniam import Detector
@@ -165,31 +168,31 @@ detector = Detector(
 result = detector.detect("Khawvel fe dan phung...")
 ```
 
-### Modes & Advanced Options
+### Modes
 
 ```python
 from hmaraniam import Detector
 
-# Basic Mode (Default ~30k core unigrams)
+# Basic mode (default, 45k core unigrams)
 basic_detector = Detector(mode="basic")
 
-# High Mode (Loads extended unigram shards, falling back to basic if unavailable)
+# High mode (loads extended unigram shards, falls back to basic if unavailable)
 high_detector = Detector(mode="high")
 
-# Offline-only mode (uses cached or bundled dataset without network calls)
+# Offline-only (uses cached or bundled data, no network calls)
 offline_detector = Detector(offline_only=True)
 ```
 
 ---
 
-## Datasets & Repositories
+## Datasets
 
-- **[Hmar Unigrams Dataset (`unigrams`)](https://huggingface.co/datasets/hmar-heritage-org/unigrams):** 58,983 verified Hmar surface words and active loanwords generated via `hmaraniam`'s extraction pipeline.
-- **[Corpus Archive (`corpus-archive`)](https://huggingface.co/datasets/hmar-heritage-org/corpus-archive):** Archival text corpus preserving Hmar literature and lexicons.
+- **[Hmar Unigrams (`unigrams`)](https://huggingface.co/datasets/hmar-heritage-org/unigrams):** 58,983 verified Hmar surface words and active loanwords.
+- **[Corpus Archive (`corpus-archive`)](https://huggingface.co/datasets/hmar-heritage-org/corpus-archive):** Archival text corpus of Hmar literature and lexicons.
 
 ---
 
-## Error Handling
+## Error handling
 
 `hmaraniam` raises standard Python exceptions:
 
@@ -213,13 +216,11 @@ except TypeError as e:
 
 ## License
 
-Published under the MIT License by the **Hmar Heritage Foundation**.
+MIT License. Published by the Hmar Heritage Foundation.
 
 ---
 
-## Citation & Attribution
-
-If you use this software in your research or tools, please cite:
+## Citation
 
 ```bibtex
 @software{hmaraniam_2026,
