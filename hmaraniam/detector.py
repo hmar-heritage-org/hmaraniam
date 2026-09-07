@@ -99,7 +99,8 @@ def load_tokens(input_data: Union[str, List[str], Tuple[str, ...], Path]) -> Lis
                     content = unicodedata.normalize("NFC", f.read())
                 # If file contains spaces, tokenize as raw text article; otherwise 1 token per line
                 if re.search(r"[ \t]", content.strip()):
-                    cleaned_text = re.sub(r"https?://\S+|www\.\S+", " ", content)
+                    cleaned_text = re.sub(r"<[^>]+>", " ", content)
+                    cleaned_text = re.sub(r"https?://\S+|www\.\S+", " ", cleaned_text)
                     cleaned_text = re.sub(r"\b[\w\.-]+@[\w\.-]+\.\w+\b", " ", cleaned_text)
                     return [w.lower() for w in re.findall(r"\b[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF\u0300-\u036F'-]+\b", cleaned_text)]
                 else:
@@ -116,6 +117,7 @@ def load_tokens(input_data: Union[str, List[str], Tuple[str, ...], Path]) -> Lis
             return []
 
         cleaned_text = unicodedata.normalize("NFC", s_input)
+        cleaned_text = re.sub(r"<[^>]+>", " ", cleaned_text)
         cleaned_text = re.sub(r"https?://\S+|www\.\S+", " ", cleaned_text)
         cleaned_text = re.sub(r"\b[\w\.-]+@[\w\.-]+\.\w+\b", " ", cleaned_text)
         return [w.lower() for w in re.findall(r"\b[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF\u0300-\u036F'-]+\b", cleaned_text)]
