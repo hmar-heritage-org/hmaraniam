@@ -12,13 +12,15 @@ Maintained by the [Hmar Heritage Foundation](https://hmarheritage.pages.dev) as 
 
 ## Features
 
-- **Fast dictionary lookups:** Uses $O(1)$ set matching backed by **37,093 verified pure Hmar unigrams** with no machine learning dependencies (PyTorch and TensorFlow free).
+- **Frequency-weighted detection:** Scores each token using corpus log-frequencies (`log(1 + count)`) compiled from 2 Hmar Bibles and 583 verified web articles — **45,042 unigrams** with real-world frequency data. Core structural words (`chu`, `chun`, `an`) carry maximum signal; rare or loanwords carry proportionally lower weight.
 - **Dual diacritic scoring:** Reports `casual_hmar_ratio` (ASCII-normalized for standard QWERTY typing) and `formal_hmar_ratio` (exact diacritic matches for formal text).
-- **Specific Sibling Language Resolution:** Distinguishes sibling Zo languages (`mizo`, `paite`, `thadou`, `gangte`, `zou`, `vaiphei`) using dialect-exclusive particles and exclusive vocabulary sets.
+- **Sibling Zo language resolution:** Distinguishes sibling Zo languages (`mizo`, `paite`, `thadou`, `gangte`, `zou`, `vaiphei`) using dialect-exclusive particles and per-language exclusive vocabulary sets.
 - **Separate confidence scores:** Separates overall classification confidence (`detected_language_confidence`) from Hmar-specific confidence (`hmar_confidence`).
-- **Consistent JSON output:** Returns the same dictionary structure for every call, including word counts, sibling scores, and diacritic breakdowns.
+- **Consistent JSON output:** Returns the same dictionary structure for every call, including word counts, frequency-weighted ratios, sibling scores, and diacritic breakdowns.
+- **QOL text sanitization:** Automatically strips HTML tags, Markdown syntax (bold, italic, links, code blocks), URLs, and email addresses from raw pasted input before token evaluation.
 - **Custom unigrams & stopwords:** Pass custom unigram sets, extra domain vocabulary, or custom stopword lists.
 - **Offline & CDN dataset loading:** Syncs unigram sets via jsDelivr CDN with local disk caching and bundled offline fallbacks.
+- **Zero dependencies:** Pure Python standard library. No PyTorch, TensorFlow, NumPy, or spaCy required.
 
 ---
 
@@ -50,6 +52,7 @@ pip install hmaraniam
   "mode": "basic",
   "scores": {
     "casual_hmar_ratio": 0.9524,
+    "weighted_hmar_ratio": 0.9103,
     "formal_hmar_ratio": 0.8095,
     "english_stopword_ratio": 0.0000,
     "sibling_zo_stopword_ratio": 0.0000,
