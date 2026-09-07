@@ -2,6 +2,18 @@
 
 ---
 
+## [0.2.2] — 2026-09-07
+
+### Added
+
+- **100-tier dense rank weighting:** Frequency weights for unigrams are grouped into 100 dense-frequency tiers (10 segments × 10 sub-segments). Diacritics are normalized and merged under the hood (`ṭha` and `tha` combined), giving balanced scoring across formal and casual orthographies.
+
+### Removed
+
+- **Redundant `"mode"` field:** Removed the legacy `"mode": "basic"` field from detection result payloads and CLI JSON schemas, simplifying the output structure.
+
+---
+
 ## [0.2.1] — 2026-09-07
 
 ### Added
