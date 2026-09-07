@@ -36,6 +36,23 @@ def strip_diacritics(s: str) -> str:
     return "".join(c for c in unicodedata.normalize("NFD", s_norm) if unicodedata.category(c) != "Mn")
 
 
+def _sanitize_raw_text(text: str) -> str:
+    """
+    QOL text preprocessor for raw strings, Markdown, HTML, URLs, and code blocks.
+    Extracts plain human-readable text while stripping structural markup noise.
+    """
+    # 1. Strip Markdown code blocks (```code```)
+    s = re.sub(r"```[\s\S]*?```", " ", text)
+    # 2. Strip HTML tags (<p>, <div>, <a href="...">)
+    s = re.sub(r"<[^>]+>", " ", s)
+    # 3. Unwrap Markdown links and images: ![alt](url) or [link text](url) -> link text
+    s = re.sub(r"!?\[([^\]]+)\]\([^)]+\)", r" \1 ", s)
+    # 4. Strip URLs and email addresses
+    s = re.sub(r"https?://\S+|www\.\S+", " ", s)
+    s = re.sub(r"\b[\w\.-]+@[\w\.-]+\.\w+\b", " ", s)
+    return s
+
+
 def load_tokens(input_data: Union[str, List[str], Tuple[str, ...], Path]) -> List[str]:
     """
     Load clean, deterministic word tokens from structured inputs (JSON array, CSV, line-delimited TXT, or Python List).
@@ -99,9 +116,7 @@ def load_tokens(input_data: Union[str, List[str], Tuple[str, ...], Path]) -> Lis
                     content = unicodedata.normalize("NFC", f.read())
                 # If file contains spaces, tokenize as raw text article; otherwise 1 token per line
                 if re.search(r"[ \t]", content.strip()):
-                    cleaned_text = re.sub(r"<[^>]+>", " ", content)
-                    cleaned_text = re.sub(r"https?://\S+|www\.\S+", " ", cleaned_text)
-                    cleaned_text = re.sub(r"\b[\w\.-]+@[\w\.-]+\.\w+\b", " ", cleaned_text)
+                    cleaned_text = _sanitize_raw_text(content)
                     return [w.lower() for w in re.findall(r"\b[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF\u0300-\u036F'-]+\b", cleaned_text)]
                 else:
                     lines = content.splitlines()
@@ -117,9 +132,7 @@ def load_tokens(input_data: Union[str, List[str], Tuple[str, ...], Path]) -> Lis
             return []
 
         cleaned_text = unicodedata.normalize("NFC", s_input)
-        cleaned_text = re.sub(r"<[^>]+>", " ", cleaned_text)
-        cleaned_text = re.sub(r"https?://\S+|www\.\S+", " ", cleaned_text)
-        cleaned_text = re.sub(r"\b[\w\.-]+@[\w\.-]+\.\w+\b", " ", cleaned_text)
+        cleaned_text = _sanitize_raw_text(cleaned_text)
         return [w.lower() for w in re.findall(r"\b[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF\u0300-\u036F'-]+\b", cleaned_text)]
 
     raise TypeError(f"Expected input to be a text string, list of tokens, or file path (.json, .csv, .txt), got {type(input_data).__name__}")
