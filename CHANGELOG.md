@@ -2,6 +2,23 @@
 
 ---
 
+## [0.2.1] — 2026-09-07
+
+### Added
+
+- **Two-sided stopword verification gate:** Classification in the Zo (Kuki-Chin) cognate overlap zone now balances explicit Hmar grammatical markers against sibling markers.
+- `hmar_stopwords_count` and `hmar_stopword_ratio` fields in `scores`: counts and proportions of exclusive Hmar grammatical markers (`hai`, `chun`, `naw`, `nawh`, `nawn`, `theinaw`, `anachu`, `amiruokchu`, `leiin`, `asanchu`, `ei`, `eini`, `eiti`, `suok`, `hriet`, `tieng`, `ieng`, `iem`, `anthawk`, `ami`, `anmi`, `sungkuo`, `inbuotsei`, `khawm`, `tah`).
+- Unit tests for long-form Mizo article discrimination and contemporary Hmar memorial and essay texts (23 tests total).
+
+### Fixed
+
+- **Mizo sibling misclassification:** Mizo articles sharing 75–85% cognate root words previously satisfied Gate 2 (`effective_hmar_ratio >= 0.70`) before sibling evaluation, resulting in false ~60% Hmar confidence. Sibling classification now triggers first when sibling markers dominate.
+- **Permanent Hmar confidence on sibling matches:** `hmar_confidence` is now strictly `0.0000` when a sibling language heuristic triggers.
+- **Stopwords collider cleanup:** Purged common Hmar words (`ṭawng`, `chunga`, `lova`, `lovin`, `sawi`, `nilo`, `nilovin`, `zawng`, `zawngte`, `tlangzarh`) from `sibling_zo_stopwords.json` that previously caused false sibling flags on contemporary Hmar texts.
+- **Reconciled scrapped basic/high CDN logic:** Fully unified all 45,042 unigrams into offline bundled shard, cleaning up deprecated CDN shard references while preserving backward-compatible `mode` parameters.
+
+---
+
 ## [0.2.0] — 2026-09-07
 
 ### Changed

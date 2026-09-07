@@ -59,6 +59,7 @@ pip install hmaraniam
     "formal_hmar_ratio": 0.8095,
     "english_stopword_ratio": 0.0000,
     "sibling_zo_stopword_ratio": 0.0000,
+    "hmar_stopword_ratio": 0.1429,
     "unknown_words_ratio": 0.0476,
     "total_words": 21,
     "hmar_words_count": 20,
@@ -66,6 +67,7 @@ pip install hmaraniam
     "unknown_words_count": 1,
     "english_stopwords_count": 0,
     "sibling_zo_stopwords_count": 0,
+    "hmar_stopwords_count": 3,
     "sibling_lang_scores": {},
     "hmar_diacritic_words_count": 17,
     "non_hmar_diacritic_words_count": 0,
@@ -170,16 +172,18 @@ result = detector.detect("Khawvel fe dan phung...")
 
 ### Modes
 
+In v0.2+, the entire 45,042 frequency-weighted vocabulary is bundled directly into the library, operating 100% offline with zero network latency.
+
 ```python
 from hmaraniam import Detector
 
-# Basic mode (default, 45k core unigrams)
-basic_detector = Detector(mode="basic")
+# Default / Basic mode (45k unified unigrams, offline)
+detector = Detector()
 
-# High mode (loads extended unigram shards, falls back to basic if unavailable)
+# High mode (retained for backward compatibility, uses unified dataset)
 high_detector = Detector(mode="high")
 
-# Offline-only (uses cached or bundled data, no network calls)
+# Explicit offline flag
 offline_detector = Detector(offline_only=True)
 ```
 

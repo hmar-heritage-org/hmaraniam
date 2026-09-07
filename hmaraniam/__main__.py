@@ -89,6 +89,7 @@ hmaraniam outputs an immutable JSON payload for every classification request:
     "formal_hmar_ratio": 0.8095,          # Ratio of tokens matching exact formal Hmar diacritics
     "english_stopword_ratio": 0.0000,     # Ratio of English stopword matches
     "sibling_zo_stopword_ratio": 0.0000,   # Ratio of Sibling Zo (Mizo/Paite/Vaiphei) structural markers
+    "hmar_stopword_ratio": 0.1429,        # Ratio of exclusive Hmar grammatical markers (hai, chun, naw...)
     "unknown_words_ratio": 0.0476,        # Ratio of unrecognized tokens against vocabulary
     "total_words": 21,                    # Total token count evaluated
     "hmar_words_count": 20,               # Count of recognized Hmar word tokens
@@ -96,6 +97,7 @@ hmaraniam outputs an immutable JSON payload for every classification request:
     "unknown_words_count": 1,             # Count of unknown tokens
     "english_stopwords_count": 0,         # Count of English stopwords
     "sibling_zo_stopwords_count": 0,      # Count of Sibling Zo stopwords
+    "hmar_stopwords_count": 3,            # Count of exclusive Hmar grammatical markers
     "hmar_diacritic_words_count": 17,     # Count of recognized Hmar words typed with diacritics
     "non_hmar_diacritic_words_count": 0,  # Count of non-Hmar diacritic words isolated
     "total_diacritic_words_count": 17     # Total diacritic token count
@@ -212,7 +214,7 @@ NAVIGABLE HELP TOPICS:
 OPTIONS:
   -h, --help                Show this help sitemap and exit.
   -v, --version             Show version number and exit.
-  --mode {{basic,high}}       Detection mode ('basic' ~30k unigrams or 'high' extended). Default: basic.
+  --mode {basic,high}       Detection mode (unified 45k vocabulary in v0.2+). Default: basic.
   --custom-unigrams FILE    Replace default unigram dataset with a custom file (.json/.csv/.txt).
   --extra-unigrams FILE     Append extra domain words to vocabulary dataset.
   --custom-stopwords FILE   Add custom stopwords.
@@ -252,7 +254,7 @@ def main():
     parser.add_argument("-h", "--help", action="store_true", help="Show help sitemap and exit")
     parser.add_argument("-v", "--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("input", nargs="?", help="Text string or path to token file (.json, .csv, .txt)")
-    parser.add_argument("--mode", choices=["basic", "high"], default="basic", help="Detection mode ('basic' or 'high')")
+    parser.add_argument("--mode", choices=["basic", "high"], default="basic", help="Detection mode (unified 45k vocabulary in v0.2+)")
     parser.add_argument("--custom-unigrams", help="Path to custom unigrams file (.json/.csv/.txt)")
     parser.add_argument("--extra-unigrams", help="Path to extra unigrams file (.json/.csv/.txt)")
     parser.add_argument("--custom-stopwords", help="Path to custom stopwords file (.json/.csv/.txt)")

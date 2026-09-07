@@ -153,6 +153,11 @@ class TestHmaraniam(unittest.TestCase):
         # Both must contain sibling_lang_scores
         self.assertIn("sibling_lang_scores", res_empty["scores"])
         self.assertIn("sibling_lang_scores", res_normal["scores"])
+        # Both must contain hmar stopword keys
+        self.assertIn("hmar_stopword_ratio", res_empty["scores"])
+        self.assertIn("hmar_stopword_ratio", res_normal["scores"])
+        self.assertIn("hmar_stopwords_count", res_empty["scores"])
+        self.assertIn("hmar_stopwords_count", res_normal["scores"])
 
     def test_whitespace_only_input(self):
         # Whitespace-only strings should behave identically to empty string
@@ -209,6 +214,42 @@ class TestHmaraniam(unittest.TestCase):
         res_eng = detect(eng_text)
         self.assertLess(res_eng["scores"]["weighted_hmar_ratio"], 0.40)
 
+    def test_mizo_article_discrimination(self):
+        # Long-form Mizo text with high cognate overlap must cleanly detect as mizo with 0% Hmar confidence
+        mizo_article = (
+            "Tunlai khawvel hmasawnna leh changkannain a ken tel internet leh social media-te hi "
+            "mi tu pawhin kan hmang nasa tawh em em a; heng hian kan chhungte, thiante, thawhpuite "
+            "leh hmelhriat dangte nena kan inlaichin danah nghawng a nei nasa hle tih pawh kan hre "
+            "theuh awm e. Kan pi leh pu ten an lo suangtuah thiam phak bakin kan nunphung a inthlak a, "
+            "kan rilru put hmang leh khawvel thlir dan pawh nasa takin a inher danglam tawh bawk."
+        )
+        res = detect(mizo_article)
+        self.assertEqual(res["language"], "mizo")
+        self.assertEqual(res["hmar_confidence"], 0.0)
+        self.assertGreaterEqual(res["detected_language_confidence"], 0.90)
+    def test_contemporary_hmar_discrimination(self):
+        # Contemporary Hmar text with loanwords / modern spelling must remain 100% Hmar
+        sample1 = (
+            "Ka nu chu March 10, 2025, zantieng khan a boral a. "
+            "Ka unauhai ta dinga sek taka ka um a ngai ti ka hriet leiin ka sûn ve naw ni awm takkin "
+            "sek tak chun ka um a. A hmangaitu tamtak inhuoltu neia thi ani a."
+        )
+        res1 = detect(sample1)
+        self.assertEqual(res1["language"], "hmar")
+        self.assertGreaterEqual(res1["hmar_confidence"], 0.85)
+        self.assertFalse(res1["sibling_heuristic"])
+
+        sample2 = (
+            "Hi a chunga tiengbik hai hi Hmar ṭawng in ei inlet chun andik thei ta nawh asanchu "
+            "Sak le Thlang hi changtieng le vawitieng, an um tak leiin. "
+            "Leihnuoi hin nghat dan bik aneia, nuomthu a map hai va hem danglam kha thil thei an naw a."
+        )
+        res2 = detect(sample2)
+        self.assertEqual(res2["language"], "hmar")
+        self.assertGreaterEqual(res2["hmar_confidence"], 0.85)
+        self.assertFalse(res2["sibling_heuristic"])
+
 
 if __name__ == "__main__":
     unittest.main()
+

@@ -28,6 +28,13 @@ BUNDLED_STOPWORDS = PACKAGE_DIR / "data" / "stopwords.json"
 BUNDLED_SIBLING_STOPWORDS = PACKAGE_DIR / "data" / "sibling_zo_stopwords.json"
 BUNDLED_SIBLING_EXCLUSIVE = PACKAGE_DIR / "data" / "sibling_zo_exclusive.json"
 
+# Core grammatical and morphological markers unique to Hmar (not shared with Mizo / Paite)
+HMAR_EXCLUSIVE_MARKERS: Set[str] = {
+    "hai", "chun", "naw", "nawh", "nawn", "theinaw", "anachu", "amiruokchu",
+    "leiin", "asanchu", "ei", "eini", "eiti", "suok", "hriet", "tieng", "ieng",
+    "iem", "anthawk", "ami", "anmi", "sungkuo", "inbuotsei", "khawm", "tah"
+}
+
 
 def strip_diacritics(s: str) -> str:
     """Normalize string to plain ASCII representation (ṭ -> t, removing circumflexes)."""
@@ -171,7 +178,7 @@ class Detector:
 
     def __init__(
         self,
-        mode: str = "basic",  # "basic" (core set 001) or "high" (all shards set_*.json)
+        mode: str = "basic",  # "basic" or "high" (unified 45k vocabulary in v0.2+)
         cdn_base_url: Optional[str] = None,
         cache_ttl: int = 86400,  # 24 hours in seconds
         force_remote: bool = False,
@@ -184,7 +191,7 @@ class Detector:
         self.mode = mode.lower()
         if self.mode not in ["basic", "high"]:
             raise ValueError(
-                f"Invalid detection mode '{mode}'. Supported modes are 'basic' (default) and 'high' (extended dataset)."
+                f"Invalid detection mode '{mode}'. Supported modes are 'basic' (default) and 'high'."
             )
 
         self.cdn_base_url = (cdn_base_url or DEFAULT_CDN_BASE_URL).rstrip("/") + "/"
@@ -459,19 +466,37 @@ class Detector:
 
         effective_hmar_ratio = max(casual_hmar_ratio, weighted_casual_hmar_ratio)
 
+        # Count Hmar exclusive grammatical markers
+        hmar_exclusive_hits = sum(1 for w in words if strip_diacritics(w) in HMAR_EXCLUSIVE_MARKERS)
+        hmar_exclusive_ratio = hmar_exclusive_hits / total_words if total_words > 0 else 0.0
+
         # 3. Classification Logic
         sibling_heuristic = False
+        best_sibling_score = sibling_lang_scores.get(best_sibling_lang, 0.0) if best_sibling_lang else 0.0
+        has_strong_sibling_signal = bool(
+            best_sibling_lang and (
+                best_sibling_score >= 3.0 and
+                best_sibling_score > (hmar_exclusive_hits * 2.0) and
+                hmar_exclusive_ratio < 0.03
+            )
+        )
+
         if eng_stop_ratio >= 0.025 and effective_hmar_ratio < 0.40:
             language = "english"
-        elif effective_hmar_ratio >= 0.82 and unknown_words_ratio <= 0.18:
+        elif has_strong_sibling_signal:
+            language = best_sibling_lang
+            sibling_heuristic = True
+        elif effective_hmar_ratio >= 0.82 and unknown_words_ratio <= 0.18 and not has_strong_sibling_signal:
             language = "hmar"
-        elif effective_hmar_ratio >= 0.70 and eng_stop_ratio < 0.01 and non_hmar_diacritic_words_count == 0:
+        elif effective_hmar_ratio >= 0.70 and eng_stop_ratio < 0.01 and non_hmar_diacritic_words_count == 0 and not has_strong_sibling_signal:
             language = "hmar"
         elif eng_stop_ratio >= 0.02:
             language = "english"
-        elif best_sibling_lang:
+        elif best_sibling_lang and not (hmar_exclusive_hits > 0 and hmar_exclusive_hits * 2.0 >= best_sibling_score):
             language = best_sibling_lang  # "mizo", "paite", "thadou", "gangte", "zou", "vaiphei"
             sibling_heuristic = True
+        elif effective_hmar_ratio >= 0.50:
+            language = "hmar"
         else:
             language = "other"  # Unclassified non-Hmar text
 
@@ -480,10 +505,21 @@ class Detector:
         len_weight = 1.0 - math.exp(-total_words / 6.0)
 
         # 4a. Permanent Hmar Confidence (Answers: "How confident are we that this text is Hmar?")
-        # Penalizes high unknown_words_ratio and English stopwords
-        hmar_signal = max(0.0, effective_hmar_ratio - (unknown_words_ratio * 1.5) - (eng_stop_ratio * 3.0))
-        hmar_conf_raw = min(1.0, hmar_signal / 0.75) * len_weight
-        hmar_confidence = round(min(1.0, max(0.0, hmar_conf_raw)), 4)
+        if sibling_heuristic:
+            hmar_confidence = 0.0
+        else:
+            hmar_signal = max(
+                0.0,
+                effective_hmar_ratio
+                - (unknown_words_ratio * 1.5)
+                - (eng_stop_ratio * 3.0)
+                - (sibling_zo_ratio * 5.0)
+                - (best_sibling_score * 0.05)
+            )
+            if hmar_exclusive_hits > 0 and language == "hmar":
+                hmar_signal = max(hmar_signal, 0.60 + min(0.35, hmar_exclusive_ratio * 3.0))
+            hmar_conf_raw = min(1.0, hmar_signal / 0.75) * len_weight
+            hmar_confidence = round(min(1.0, max(0.0, hmar_conf_raw)), 4)
 
         # 4b. Detected Language Confidence (Confidence in the overall classification choice)
         if language == "hmar":
@@ -492,17 +528,14 @@ class Detector:
             eng_signal = max(0.0, eng_stop_ratio - (effective_hmar_ratio / 5.0))
             eng_conf_raw = min(1.0, eng_signal / 0.04) * len_weight
             detected_language_confidence = round(min(1.0, max(0.0, eng_conf_raw)), 4)
-        elif sibling_heuristic or language == "other":
-            if sibling_zo_matches > 0 or sibling_zo_ratio >= 0.01:
-                # Actively verified non-Hmar Zo (Kuki-Chin) sibling language match!
-                sibling_signal = max(0.0, (sibling_zo_ratio * 4.0) + (unknown_words_ratio * 0.5))
-                other_conf_raw = min(1.0, sibling_signal) * len_weight
-                detected_language_confidence = round(min(1.0, max(0.75, other_conf_raw)), 4)
-            else:
-                # Out-of-scope external language or unclassified noise
-                other_signal = max(0.0, unknown_words_ratio - eng_stop_ratio)
-                other_conf_raw = min(0.50, other_signal * 0.5) * len_weight
-                detected_language_confidence = round(min(0.50, max(0.0, other_conf_raw)), 4)
+        elif sibling_heuristic:
+            sibling_signal = max(0.0, (sibling_zo_ratio * 5.0) + (best_sibling_score / 15.0))
+            sibling_conf_raw = min(1.0, max(0.85, sibling_signal)) * len_weight
+            detected_language_confidence = round(min(1.0, sibling_conf_raw), 4)
+        elif language == "other":
+            other_signal = max(0.0, unknown_words_ratio - eng_stop_ratio)
+            other_conf_raw = min(0.50, other_signal * 0.5) * len_weight
+            detected_language_confidence = round(min(0.50, max(0.0, other_conf_raw)), 4)
         else:
             detected_language_confidence = 0.0
 
@@ -518,6 +551,7 @@ class Detector:
                 "formal_hmar_ratio": round(formal_hmar_ratio, 4),
                 "english_stopword_ratio": round(eng_stop_ratio, 4),
                 "sibling_zo_stopword_ratio": round(sibling_zo_ratio, 4),
+                "hmar_stopword_ratio": round(hmar_exclusive_ratio, 4),
                 "unknown_words_ratio": round(unknown_words_ratio, 4),
                 "total_words": total_words,
                 "hmar_words_count": casual_matches,
@@ -525,6 +559,7 @@ class Detector:
                 "unknown_words_count": unknown_words_count,
                 "english_stopwords_count": eng_stop_matches,
                 "sibling_zo_stopwords_count": sibling_zo_matches,
+                "hmar_stopwords_count": hmar_exclusive_hits,
                 "sibling_lang_scores": sibling_lang_scores,
                 "hmar_diacritic_words_count": hmar_diacritic_words_count,
                 "non_hmar_diacritic_words_count": non_hmar_diacritic_words_count,
@@ -546,6 +581,7 @@ class Detector:
                 "formal_hmar_ratio": 0.0,
                 "english_stopword_ratio": 0.0,
                 "sibling_zo_stopword_ratio": 0.0,
+                "hmar_stopword_ratio": 0.0,
                 "unknown_words_ratio": 0.0,
                 "total_words": 0,
                 "hmar_words_count": 0,
@@ -553,6 +589,7 @@ class Detector:
                 "unknown_words_count": 0,
                 "english_stopwords_count": 0,
                 "sibling_zo_stopwords_count": 0,
+                "hmar_stopwords_count": 0,
                 "sibling_lang_scores": {},
                 "hmar_diacritic_words_count": 0,
                 "non_hmar_diacritic_words_count": 0,
